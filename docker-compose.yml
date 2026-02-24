@@ -1,0 +1,92 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: modelforge-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - modelforge-net
+    healthcheck:
+      test: echo stat | nc localhost 2181
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: modelforge-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - modelforge-net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: modelforge-db
+    environment:
+      POSTGRES_USER: modelforge
+      POSTGRES_PASSWORD: modelforge_secret
+      POSTGRES_DB: modelforge_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - modelforge-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: modelforge-storage
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: modelforge_admin
+      MINIO_ROOT_PASSWORD: modelforge_secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - modelforge-net
+
+  ml-worker:
+    build: ./ml-service
+    container_name: modelforge-ml-worker-1
+    depends_on:
+      - kafka
+      - postgres
+      - minio
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC: modelforge.generation.requests
+      KAFKA_GROUP_ID: modelforge.ml-workers
+      DATABASE_URL: postgresql://modelforge:modelforge_secret@postgres:5432/modelforge_db
+      S3_ENDPOINT: minio:9000
+      S3_ACCESS_KEY: modelforge_admin
+      S3_SECRET_KEY: modelforge_secret
+      S3_BUCKET: models-output
+    networks:
+      - modelforge-net
+    restart: always
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  modelforge-net:
+    driver: bridge

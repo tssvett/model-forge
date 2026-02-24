@@ -1,0 +1,126 @@
+# ===========================
+# PYTHON
+# ===========================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ===========================
+# DOCKER
+# ===========================
+# Docker volumes (если создаются локально)
+postgres_/
+minio_/
+data/
+
+# Docker logs (опционально)
+*.log
+
+# ===========================
+# LOCAL CONFIGS & SECRETS
+# ===========================
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+*.secret
+
+# Database files (если локальные)
+*.db
+*.sqlite
+*.sqlite3
+
+# ===========================
+# OS FILES
+# ===========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ===========================
+# PROJECT SPECIFIC (ModelForge)
+# ===========================
+# ML models (если будешь скачивать большие файлы)
+ml-service/models/
+*.pt
+*.pth
+*.onnx
+*.h5
+
+# Generated 3D files (тестовые)
+*.obj
+*.glb
+*.gltf
+
+# Test outputs
+test_outputs/
+tmp/
+temp/
