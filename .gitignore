@@ -124,3 +124,11 @@ ml-service/models/
 test_outputs/
 tmp/
 temp/
+
+# Python
+*.env
+
+# Docker
+deploy/.env
+# Logs
+logs/

@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: ${COMPOSE_PROJECT_NAME}-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
+      ZOO_HEAP_SIZE: ${ZOO_HEAP_SIZE}
+    ports:
+      - "${ZOOKEEPER_PORT}:${ZOOKEEPER_PORT}"
+    networks:
+      - modelforge-net
+    mem_limit: ${ZOOKEEPER_MEM_LIMIT}
+    cpus: ${ZOOKEEPER_CPU_LIMIT}
+    healthcheck:
+      test: echo stat | nc localhost ${ZOOKEEPER_CLIENT_PORT}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: ${COMPOSE_PROJECT_NAME}-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "${KAFKA_PORT_1}:${KAFKA_PORT_1}"
+      - "${KAFKA_PORT_2}:${KAFKA_PORT_2}"
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: ${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP}
+      KAFKA_INTER_BROKER_LISTENER_NAME: ${KAFKA_INTER_BROKER_LISTENER_NAME}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+      KAFKA_HEAP_OPTS: ${KAFKA_HEAP_OPTS}
+      KAFKA_NUM_IO_THREADS: ${KAFKA_NUM_IO_THREADS}
+      KAFKA_NUM_NETWORK_THREADS: ${KAFKA_NUM_NETWORK_THREADS}
+      KAFKA_LOG_RETENTION_HOURS: ${KAFKA_LOG_RETENTION_HOURS}
+      KAFKA_LOG_SEGMENT_BYTES: ${KAFKA_LOG_SEGMENT_BYTES}
+      KAFKA_MESSAGE_MAX_BYTES: ${KAFKA_MESSAGE_MAX_BYTES}
+    networks:
+      - modelforge-net
+    mem_limit: ${KAFKA_MEM_LIMIT}
+    cpus: ${KAFKA_CPU_LIMIT}
+    healthcheck:
+      test: kafka-broker-api-versions --bootstrap-server localhost:${KAFKA_PORT_1}
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: ${COMPOSE_PROJECT_NAME}-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    command: >
+      postgres
+      -c shared_buffers=${POSTGRES_SHARED_BUFFERS}
+      -c effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE}
+      -c work_mem=${POSTGRES_WORK_MEM}
+      -c maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM}
+      -c max_connections=${POSTGRES_MAX_CONNECTIONS}
+      -c fsync=off
+      -c full_page_writes=off
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - modelforge-net
+    mem_limit: ${POSTGRES_MEM_LIMIT}
+    cpus: ${POSTGRES_CPU_LIMIT}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail
+
+  minio:
+    image: minio/minio:latest
+    container_name: ${COMPOSE_PROJECT_NAME}-storage
+    command: server /data --console-address ":${MINIO_CONSOLE_PORT}"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_API_REQUESTS_MAX: ${MINIO_API_REQUESTS_MAX}
+    ports:
+      - "${MINIO_PORT}:${MINIO_PORT}"
+      - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}"
+    volumes:
+      - minio_data:/data
+    networks:
+      - modelforge-net
+    mem_limit: ${MINIO_MEM_LIMIT}
+    cpus: ${MINIO_CPU_LIMIT}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${MINIO_PORT}/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail

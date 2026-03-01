@@ -1,13 +1,15 @@
-import logging
 from abc import ABC, abstractmethod
-from typing import Optional
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
+
 import psycopg2
 
 from ..config import Settings
+from ..config.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

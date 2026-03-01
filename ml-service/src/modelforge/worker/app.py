@@ -1,15 +1,15 @@
-import logging
 import signal
 import sys
 from typing import Optional
 
 from ..config import Settings
-from ..kafka.consumer import KafkaConsumerService
+from ..config.logging import get_logger
 from ..database.repository import TaskRepository
+from ..kafka.consumer import KafkaConsumerService
 from ..storage.s3_client import S3StorageService
 from ..tasks.processor import TaskProcessor
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class App:

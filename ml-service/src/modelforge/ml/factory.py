@@ -1,10 +1,10 @@
 # src/modelforge/ml/factory.py
-import logging
-from ..config import Settings
 from .inference_interface import ModelInferenceInterface
 from .mock_service import MockInferenceService
+from ..config import Settings
+from ..config.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def select_device(preferred: str) -> str:

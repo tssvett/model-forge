@@ -1,0 +1,11 @@
+version: '3.8'
+
+networks:
+  modelforge-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
+  loki_data:
+  grafana_data:

@@ -1,14 +1,14 @@
-import logging
 import io
 import time
-import trimesh
-import numpy as np
-from PIL import Image
 from typing import Dict, Any
 
-from .inference_interface import ModelInferenceInterface, ModelInferenceResult
+import trimesh
+from PIL import Image
 
-logger = logging.getLogger(__name__)
+from .inference_interface import ModelInferenceInterface, ModelInferenceResult
+from ..config.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class MockInferenceService(ModelInferenceInterface):

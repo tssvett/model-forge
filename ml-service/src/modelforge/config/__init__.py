@@ -1,3 +1,4 @@
 from .settings import Settings, settings
+from .logging import setup_logging, get_logger
 
-__all__ = ["Settings", "settings"]
+__all__ = ["Settings", "settings", "setup_logging", "get_logger"]

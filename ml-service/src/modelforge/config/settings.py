@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings
 from pydantic import Field, validator
-from typing import Optional
+from typing import Optional, Literal
 
 
 class Settings(BaseSettings):
@@ -72,10 +72,35 @@ class Settings(BaseSettings):
         description="Calculate scientific metrics (Chamfer, UV-stretch, etc.)"
     )
 
+    # === Logging ===
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
+        default="INFO",
+        description="Logging level"
+    )
+    log_format: Literal["json", "text"] = Field(
+        default="text",
+        description="Log output format: 'json' for Loki/Grafana, 'text' for console"
+    )
+    service_name: str = Field(
+        default="modelforge-ml-worker",
+        description="Service name for log attribution"
+    )
+    environment: Literal["development", "staging", "production"] = Field(
+        default="development",
+        description="Application environment"
+    )
+    app_version: str = Field(
+        default="0.1.0",
+        description="Application version"
+    )
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         extra = "ignore"
+        # Позволяет использовать alias в env-переменных: LOG_LEVEL вместо log_level
+        alias_generator = lambda s: s.upper()
+        populate_by_name = True
 
     @validator('tripsr_device')
     def validate_device(cls, v):
