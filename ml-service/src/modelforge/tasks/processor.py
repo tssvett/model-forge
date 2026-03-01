@@ -1,16 +1,17 @@
-import logging
-import json
 import io
+import json
 from typing import Dict, Any
+
 from PIL import Image
 
-from ..database.repository import TaskRepository
-from ..storage.s3_client import S3StorageService
 from ..config import Settings
+from ..config.logging import get_logger
+from ..database.repository import TaskRepository
 from ..ml.factory import create_inference_service
 from ..ml.inference_interface import ModelInferenceInterface
+from ..storage.s3_client import S3StorageService
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class TaskProcessor:

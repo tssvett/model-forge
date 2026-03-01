@@ -1,13 +1,15 @@
-import logging
+import json
 import json
 import time
 from typing import Generator, Dict, Any, Optional
+
 from kafka import KafkaConsumer
 from kafka.errors import KafkaError
 
 from ..config import Settings
+from ..config.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class KafkaConsumerService:

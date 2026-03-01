@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  loki:
+    image: grafana/loki:2.9.2
+    container_name: ${COMPOSE_PROJECT_NAME}-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "${LOKI_PORT}:${LOKI_PORT}"
+    volumes:
+      - loki_data:/loki
+    networks:
+      - modelforge-net
+    mem_limit: ${LOKI_MEM_LIMIT}
+    cpus: ${LOKI_CPU_LIMIT}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: ${COMPOSE_PROJECT_NAME}-promtail
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../logging/promtail-config.yml:/etc/promtail/config.yml:ro
+    networks:
+      - modelforge-net
+    mem_limit: ${PROMTAIL_MEM_LIMIT}
+    cpus: ${PROMTAIL_CPU_LIMIT}
+    restart: unless-stopped
+    depends_on:
+      - loki
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ${COMPOSE_PROJECT_NAME}-grafana
+    ports:
+      - "${GRAFANA_PORT}:${GRAFANA_PORT}"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-lokiexplore-app
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ../logging/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - modelforge-net
+    mem_limit: ${GRAFANA_MEM_LIMIT}
+    cpus: ${GRAFANA_CPU_LIMIT}
+    restart: unless-stopped
+    depends_on:
+      - loki
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail

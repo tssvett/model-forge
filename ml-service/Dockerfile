@@ -2,30 +2,28 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-# ===========================================
-# СЛОЙ 1: Системные зависимости (кэшируется редко)
-# ===========================================
-RUN apt-get update && apt-get install -y \
+# Системные зависимости
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# ===========================================
-# СЛОЙ 2: Python зависимости (кэшируется до изменений requirements.txt)
-# ===========================================
+# Python зависимости
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ===========================================
-# СЛОЙ 3: Исходный код (кэшируется до изменений кода)
-# ===========================================
+# Исходный код
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 
-# ===========================================
-# Настройки
-# ===========================================
-ENV PYTHONPATH=/app/src
+# Оптимизация Python и логирования
+ENV PYTHONPATH=/app/src \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    MALLOC_ARENA_MAX=2 \
+    OMP_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    TORCH_NUM_THREADS=1
 
-# Точка входа
 CMD ["python", "-m", "modelforge.worker.main"]

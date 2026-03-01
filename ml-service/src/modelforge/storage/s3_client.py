@@ -1,11 +1,10 @@
-import logging
-from typing import Optional
 import boto3
 from botocore.exceptions import ClientError
 
 from ..config import Settings
+from ..config.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class S3StorageService:

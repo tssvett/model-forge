@@ -2,35 +2,58 @@
 
 Микросервисная система генерации 3D-моделей на основе методов компьютерного зрения.
 
-## 🚀 Быстрый запуск
+## Запуск
 
-Вся инфраструктура (Kafka, Postgres, MinIO, ML Worker) запускается через Docker Compose.
+Все команды выполняются из директории `deploy/`.
 
-### 1. Запуск системы
+### Предварительная настройка
 ```bash
-docker-compose up --build
+cd deploy
+cp .env.example .env
+# При необходимости отредактируйте переменные в .env
 ```
 
-### 2. Проверка статусов
-Убедитесь, что все сервисы в статусе `healthy`:
+### Запуск с логированием (Loki + Grafana)
 ```bash
-docker-compose ps
+docker-compose -f docker-compose.yml -f docker-compose.infra.yml -f docker-compose.logging.yml -f docker-compose.app.yml up -d --build
 ```
 
-### 3. Тестирование (отправка задач)
-В отдельном терминале запустите скрипт генерации тестовых задач:
+### Запуск без логирования (инфраструктура + приложение)
 ```bash
-cd ml-service
-pip install -r requirements.txt
-python scripts/seed_tasks.py
+docker-compose -f docker-compose.yml -f docker-compose.infra.yml -f docker-compose.app.yml up -d --build
 ```
 
-### 4. Просмотр результатов
-*   **Логи воркера:** `docker-compose logs -f ml-worker`
-*   **База данных:** `localhost:5432` (user: `modelforge`, pass: `modelforge_secret`)
-*   **Файлы (MinIO):** `http://localhost:9001` (user: `modelforge_admin`, pass: `modelforge_secret`)
-
-## 🛑 Остановка
+### Запуск только инфраструктуры
 ```bash
-docker-compose down
+docker-compose -f docker-compose.yml -f docker-compose.infra.yml up -d
 ```
+
+## Просмотр логов
+
+### Через Docker Compose
+```bash
+# Логи конкретного сервиса
+docker-compose logs -f ml-worker
+docker-compose logs -f kafka
+
+# Все логи
+docker-compose logs -f
+```
+
+### Через Grafana (если запущен стек логирования)
+1. Откройте http://localhost:3000
+2. Авторизуйтесь (admin/admin)
+3. Перейдите в Explore → выберите DataSource Loki
+4. Пример запроса: `{service="modelforge-ml-worker"}`
+
+## Остановка
+
+```bash
+# Остановка с сохранением данных
+docker-compose -f docker-compose.yml -f docker-compose.infra.yml -f docker-compose.logging.yml -f docker-compose.app.yml down
+
+# Остановка с удалением томов (данные будут потеряны)
+docker-compose -f docker-compose.yml -f docker-compose.infra.yml -f docker-compose.logging.yml -f docker-compose.app.yml down -v
+```
+
+> Примечание: при выполнении `down` указывайте те же файлы `-f`, которые использовались при запуске.
