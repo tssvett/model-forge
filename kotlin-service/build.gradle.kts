@@ -41,6 +41,9 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
+    // Swagger/OpenAPI
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+
     // Логирование (JSON для Loki)
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 

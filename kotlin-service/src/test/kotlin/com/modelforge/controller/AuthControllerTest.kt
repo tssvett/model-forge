@@ -139,4 +139,22 @@ class AuthControllerTest {
             status { isOk() }
         }
     }
+
+    @Test
+    fun `swagger-ui is accessible`() {
+        mockMvc.get("/swagger-ui/index.html").andExpect {
+            status { isOk() }
+        }
+    }
+
+    @Test
+    fun `openapi docs are accessible`() {
+        mockMvc.get("/v3/api-docs").andExpect {
+            status { isOk() }
+            jsonPath("$.info.title") { value("ModelForge API") }
+            jsonPath("$.paths./auth/register") { exists() }
+            jsonPath("$.paths./auth/login") { exists() }
+            jsonPath("$.components.securitySchemes.bearerAuth") { exists() }
+        }
+    }
 }
