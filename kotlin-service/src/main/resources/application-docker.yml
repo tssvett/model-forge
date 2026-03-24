@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: ${SERVICE_NAME:modelforge-kotlin-service}
+
+logging:
+  config: classpath:logback-spring.xml
+
+modelforge:
+  environment: ${ENVIRONMENT:development}
+  version: ${APP_VERSION:0.1.0}

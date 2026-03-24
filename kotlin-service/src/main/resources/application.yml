@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: modelforge-kotlin-service
+
+server:
+  port: 8080
+
+# Actuator: health, info, prometheus
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+# ModelForge
+modelforge:
+  environment: ${ENVIRONMENT:development}
+  version: ${APP_VERSION:0.1.0}

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  kotlin-service:
+    build: ../kotlin-service
+    container_name: ${COMPOSE_PROJECT_NAME}-kotlin-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    ports:
+      - "${KOTLIN_SERVICE_PORT}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVICE_NAME: ${KOTLIN_SERVICE_NAME}
+      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_FORMAT: ${LOG_FORMAT}
+      ENVIRONMENT: ${ENVIRONMENT}
+      APP_VERSION: ${APP_VERSION}
+      JAVA_OPTS: ${KOTLIN_SERVICE_JAVA_OPTS}
+    networks:
+      - modelforge-net
+    mem_limit: ${KOTLIN_SERVICE_MEM_LIMIT}
+    cpus: ${KOTLIN_SERVICE_CPU_LIMIT}
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail
