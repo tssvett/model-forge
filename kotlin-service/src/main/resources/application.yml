@@ -2,6 +2,17 @@ spring:
   application:
     name: modelforge-kotlin-service
 
+  # БД (H2 для локальной разработки)
+  datasource:
+    url: jdbc:h2:mem:modelforge;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # Liquibase
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
 server:
   port: 8080
 
@@ -25,3 +36,6 @@ management:
 modelforge:
   environment: ${ENVIRONMENT:development}
   version: ${APP_VERSION:0.1.0}
+  jwt:
+    secret: ${JWT_SECRET_KEY:default-dev-secret-key-min-32-characters-long!!}
+    expiration-hours: ${JWT_EXPIRATION_HOURS:24}
