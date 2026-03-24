@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <springProperty scope="context" name="SERVICE_NAME" source="spring.application.name"
+                    defaultValue="modelforge-kotlin-service"/>
+    <springProperty scope="context" name="ENVIRONMENT" source="modelforge.environment"
+                    defaultValue="development"/>
+    <springProperty scope="context" name="APP_VERSION" source="modelforge.version"
+                    defaultValue="0.1.0"/>
+
+    <!-- Консольный вывод (plain text) — default профиль -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- JSON вывод для Loki — docker профиль -->
+    <springProfile name="docker">
+        <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <customFields>{"service":"${SERVICE_NAME}","environment":"${ENVIRONMENT}","version":"${APP_VERSION}"}</customFields>
+                <fieldNames>
+                    <timestamp>timestamp</timestamp>
+                    <version>[ignore]</version>
+                </fieldNames>
+            </encoder>
+        </appender>
+
+        <root level="${LOG_LEVEL:-INFO}">
+            <appender-ref ref="JSON"/>
+        </root>
+    </springProfile>
+
+    <!-- Default профиль (локальная разработка) -->
+    <springProfile name="!docker">
+        <root level="${LOG_LEVEL:-INFO}">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>
