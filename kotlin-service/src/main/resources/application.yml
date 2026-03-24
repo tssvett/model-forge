@@ -32,6 +32,10 @@ management:
     tags:
       application: ${spring.application.name}
 
+# Kafka (embedded для локальной разработки отключен)
+spring.kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
 # ModelForge
 modelforge:
   environment: ${ENVIRONMENT:development}
@@ -39,3 +43,11 @@ modelforge:
   jwt:
     secret: ${JWT_SECRET_KEY:default-dev-secret-key-min-32-characters-long!!}
     expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+  kafka:
+    topic: ${KAFKA_TOPIC:modelforge.generation.requests}
+  outbox:
+    poll-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:5000}
+    max-retry: ${OUTBOX_MAX_RETRY:3}
+    batch-size: ${OUTBOX_BATCH_SIZE:50}
+    retention-days: ${OUTBOX_RETENTION_DAYS:7}
+    cleanup-cron: ${OUTBOX_CLEANUP_CRON:0 0 3 * * *}
