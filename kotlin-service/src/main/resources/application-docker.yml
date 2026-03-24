@@ -8,15 +8,10 @@ spring:
     username: ${POSTGRES_USER:modelforge}
     password: ${POSTGRES_PASSWORD:changeme}
     driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-    open-in-view: false
-  flyway:
-    enabled: true
+
+  # Liquibase
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
 
 logging:
   config: classpath:logback-spring.xml

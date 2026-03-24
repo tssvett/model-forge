@@ -1,7 +1,6 @@
 package com.modelforge.controller
 
 import com.modelforge.dto.AuthResponse
-import com.modelforge.dto.ErrorResponse
 import com.modelforge.dto.LoginRequest
 import com.modelforge.dto.RegisterRequest
 import com.modelforge.service.AuthService
@@ -26,12 +25,5 @@ class AuthController(
     fun login(@Valid @RequestBody request: LoginRequest): ResponseEntity<AuthResponse> {
         val response = authService.login(request)
         return ResponseEntity.ok(response)
-    }
-
-    @ExceptionHandler(IllegalArgumentException::class)
-    fun handleBadRequest(e: IllegalArgumentException): ResponseEntity<ErrorResponse> {
-        return ResponseEntity.badRequest().body(
-            ErrorResponse(code = 400, message = e.message ?: "Bad Request")
-        )
     }
 }
