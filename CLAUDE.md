@@ -4,7 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ModelForge is a Python microservice that generates 3D models from images. It consumes tasks from Kafka, downloads images from MinIO (S3-compatible), runs ML inference, and uploads results back to MinIO, tracking status in PostgreSQL.
+ModelForge is a platform for generating 3D models from images. It consists of two services:
+
+1. **Kotlin Service** (`kotlin-service/`) — Spring Boot REST API gateway. Handles user authentication (JWT), task management, file uploads to MinIO, and publishes events to Kafka via the transactional outbox pattern. See `kotlin-service/README.md` for full documentation.
+
+2. **ML Service** (`ml-service/`) — Python worker that consumes tasks from Kafka, downloads images from MinIO (S3-compatible), runs ML inference, and uploads results back to MinIO, tracking status in PostgreSQL.
 
 ## Build & Run Commands
 
@@ -19,16 +23,24 @@ docker-compose -f docker-compose.yml -f docker-compose.infra.yml -f docker-compo
 docker-compose -f docker-compose.yml -f docker-compose.infra.yml up -d
 ```
 
-### Run tests
+### Run ML service tests
 ```bash
 cd ml-service
 PYTHONPATH=src pytest tests/ -v
 ```
 
-### Run a single test
+### Run a single ML service test
 ```bash
 cd ml-service
 PYTHONPATH=src pytest tests/test_processor.py -v -k "test_name"
+```
+
+### Run Kotlin service tests
+```bash
+cd kotlin-service
+./gradlew test              # unit tests
+./gradlew integrationTest   # integration tests
+./gradlew check             # all tests
 ```
 
 ### Seed test data (requires running infrastructure)
@@ -39,9 +51,15 @@ python ml-service/scripts/seed_tasks.py   # sends test tasks to Kafka
 
 ## Architecture
 
-The system is a distributed pipeline with this data flow:
+The system is a distributed pipeline:
 
-**Kafka** (task queue) → **ml-worker** (processing) → **MinIO** (artifact storage), with **PostgreSQL** for task state tracking and **Loki/Grafana/Promtail** for observability.
+**Client** → **Kotlin Service** (REST API + auth) → **Kafka** (task queue) → **ML Worker** (processing) → **MinIO** (artifact storage), with **PostgreSQL** for task state tracking and **Loki/Grafana/Promtail** for observability.
+
+### Kotlin Service (`kotlin-service/`)
+
+Layered Spring Boot architecture: Controllers → Services → Repositories (JdbcTemplate). Key patterns: transactional outbox for Kafka, JWT stateless auth, Liquibase migrations. Full details in `kotlin-service/README.md`.
+
+### ML Service (`ml-service/`)
 
 All application code lives in `ml-service/src/modelforge/` with these layers:
 
@@ -62,6 +80,6 @@ All application code lives in `ml-service/src/modelforge/` with these layers:
 
 ## Language & Runtime
 
-- Python 3.9, dependencies in `ml-service/requirements.txt`
-- Docker images based on `python:3.9-slim`
+- **Kotlin Service:** Kotlin 1.9.22, Spring Boot 3.2.2, JDK 17, Gradle 8.5
+- **ML Service:** Python 3.9, dependencies in `ml-service/requirements.txt`, Docker images based on `python:3.9-slim`
 - Commit messages are in Russian
