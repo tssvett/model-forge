@@ -1,5 +1,6 @@
 package com.modelforge.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.modelforge.dto.CreateTaskRequest
 import com.modelforge.dto.ErrorResponse
 import com.modelforge.dto.TaskResponse
@@ -11,7 +12,9 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
@@ -21,7 +24,8 @@ import java.util.UUID
 @RequestMapping("/api/tasks")
 @Tag(name = "Tasks", description = "Управление задачами генерации 3D-моделей")
 class TaskController(
-    private val taskService: TaskService
+    private val taskService: TaskService,
+    private val objectMapper: ObjectMapper
 ) {
 
     @PostMapping
@@ -47,7 +51,7 @@ class TaskController(
     @ApiResponses(
         ApiResponse(responseCode = "200", description = "Задача найдена",
             content = [Content(schema = Schema(implementation = TaskResponse::class))]),
-        ApiResponse(responseCode = "400", description = "Задача не найдена",
+        ApiResponse(responseCode = "404", description = "Задача не найдена",
             content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
         ApiResponse(responseCode = "403", description = "Не авторизован")
     )
@@ -71,5 +75,55 @@ class TaskController(
         val userId = authentication.principal as UUID
         val response = taskService.getUserTasks(userId)
         return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/{id}/download")
+    @Operation(summary = "Скачать сгенерированную 3D-модель")
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Файл модели (multipart/form-data: metadata + model)"),
+        ApiResponse(responseCode = "403", description = "Нет доступа к задаче",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
+        ApiResponse(responseCode = "404", description = "Задача не найдена",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
+        ApiResponse(responseCode = "409", description = "Задача ещё не завершена",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))])
+    )
+    fun downloadTask(
+        @PathVariable id: UUID,
+        authentication: Authentication,
+        response: HttpServletResponse
+    ) {
+        val userId = authentication.principal as UUID
+        val result = taskService.downloadTask(id, userId)
+
+        val boundary = "boundary-${UUID.randomUUID().toString().replace("-", "")}"
+        response.contentType = "${MediaType.MULTIPART_FORM_DATA_VALUE}; boundary=$boundary"
+        response.status = HttpServletResponse.SC_OK
+
+        val out = response.outputStream
+
+        // Part 1: metadata JSON
+        val metadata = objectMapper.writeValueAsBytes(
+            mapOf(
+                "task_id" to result.taskId.toString(),
+                "format" to result.format,
+                "generated_at" to result.generatedAt.toString()
+            )
+        )
+        out.write("--$boundary\r\n".toByteArray())
+        out.write("Content-Type: ${MediaType.APPLICATION_JSON_VALUE}\r\n".toByteArray())
+        out.write("Content-Disposition: form-data; name=\"metadata\"\r\n\r\n".toByteArray())
+        out.write(metadata)
+        out.write("\r\n".toByteArray())
+
+        // Part 2: binary model file
+        out.write("--$boundary\r\n".toByteArray())
+        out.write("Content-Type: ${MediaType.APPLICATION_OCTET_STREAM_VALUE}\r\n".toByteArray())
+        out.write("Content-Disposition: form-data; name=\"model\"; filename=\"model.${result.format}\"\r\n\r\n".toByteArray())
+        out.write(result.fileBytes)
+        out.write("\r\n".toByteArray())
+
+        out.write("--$boundary--\r\n".toByteArray())
+        out.flush()
     }
 }

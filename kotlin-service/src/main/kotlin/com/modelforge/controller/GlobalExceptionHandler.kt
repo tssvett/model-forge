@@ -1,6 +1,9 @@
 package com.modelforge.controller
 
 import com.modelforge.dto.ErrorResponse
+import com.modelforge.exception.TaskAccessDeniedException
+import com.modelforge.exception.TaskNotFoundException
+import com.modelforge.exception.TaskNotCompletedException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -12,6 +15,30 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 class GlobalExceptionHandler {
 
     private val logger = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
+
+    @ExceptionHandler(TaskNotFoundException::class)
+    fun handleNotFound(e: TaskNotFoundException): ResponseEntity<ErrorResponse> {
+        logger.warn("Not found: ${e.message}")
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+            ErrorResponse(code = 404, message = e.message ?: "Not Found")
+        )
+    }
+
+    @ExceptionHandler(TaskAccessDeniedException::class)
+    fun handleForbidden(e: TaskAccessDeniedException): ResponseEntity<ErrorResponse> {
+        logger.warn("Access denied: ${e.message}")
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+            ErrorResponse(code = 403, message = e.message ?: "Forbidden")
+        )
+    }
+
+    @ExceptionHandler(TaskNotCompletedException::class)
+    fun handleConflict(e: TaskNotCompletedException): ResponseEntity<ErrorResponse> {
+        logger.warn("Task not completed: ${e.message}")
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+            ErrorResponse(code = 409, message = e.message ?: "Conflict")
+        )
+    }
 
     @ExceptionHandler(IllegalArgumentException::class)
     fun handleBadRequest(e: IllegalArgumentException): ResponseEntity<ErrorResponse> {

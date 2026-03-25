@@ -27,3 +27,10 @@ data class TaskCreatedEvent(
     val s3InputKey: String?,
     val createdAt: Instant
 )
+
+data class TaskDownloadResult(
+    val taskId: UUID,
+    val fileBytes: ByteArray,
+    val format: String,
+    val generatedAt: Instant
+)

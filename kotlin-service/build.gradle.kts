@@ -50,6 +50,9 @@ dependencies {
     // Логирование (JSON для Loki)
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
+    // MinIO
+    implementation("io.minio:minio:8.5.7")
+
     // H2 для локальной разработки
     runtimeOnly("com.h2database:h2")
 

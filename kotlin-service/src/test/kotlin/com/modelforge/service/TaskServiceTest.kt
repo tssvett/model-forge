@@ -5,6 +5,9 @@ import com.modelforge.dto.CreateTaskRequest
 import com.modelforge.entity.OutboxEvent
 import com.modelforge.entity.Task
 import com.modelforge.entity.TaskStatus
+import com.modelforge.exception.TaskAccessDeniedException
+import com.modelforge.exception.TaskNotFoundException
+import com.modelforge.exception.TaskNotCompletedException
 import com.modelforge.repository.OutboxRepository
 import com.modelforge.repository.TaskRepository
 import org.junit.jupiter.api.Assertions.*
@@ -18,8 +21,9 @@ class TaskServiceTest {
     private val taskRepository: TaskRepository = mock()
     private val outboxRepository: OutboxRepository = mock()
     private val objectMapper = ObjectMapper().findAndRegisterModules()
+    private val minioService: MinioService = mock()
 
-    private val taskService = TaskService(taskRepository, outboxRepository, objectMapper)
+    private val taskService = TaskService(taskRepository, outboxRepository, objectMapper, minioService)
 
     private val userId = UUID.randomUUID()
 
@@ -104,5 +108,62 @@ class TaskServiceTest {
         val response = taskService.getUserTasks(userId)
 
         assertEquals(2, response.size)
+    }
+
+    @Test
+    fun `downloadTask возвращает файл для завершённой задачи`() {
+        val taskId = UUID.randomUUID()
+        val fileBytes = "fake-model-data".toByteArray()
+        val task = Task(
+            id = taskId,
+            userId = userId,
+            status = TaskStatus.COMPLETED,
+            s3OutputKey = "output/model.obj"
+        )
+
+        whenever(taskRepository.findById(taskId)).thenReturn(task)
+        whenever(minioService.downloadFile("output/model.obj")).thenReturn(fileBytes)
+        whenever(minioService.getFileFormat("output/model.obj")).thenReturn("obj")
+
+        val result = taskService.downloadTask(taskId, userId)
+
+        assertEquals(taskId, result.taskId)
+        assertArrayEquals(fileBytes, result.fileBytes)
+        assertEquals("obj", result.format)
+        verify(minioService).downloadFile("output/model.obj")
+    }
+
+    @Test
+    fun `downloadTask бросает TaskNotFoundException для несуществующей задачи`() {
+        val taskId = UUID.randomUUID()
+        whenever(taskRepository.findById(taskId)).thenReturn(null)
+
+        assertThrows<TaskNotFoundException> {
+            taskService.downloadTask(taskId, userId)
+        }
+    }
+
+    @Test
+    fun `downloadTask бросает TaskAccessDeniedException для чужой задачи`() {
+        val taskId = UUID.randomUUID()
+        val task = Task(id = taskId, userId = UUID.randomUUID(), status = TaskStatus.COMPLETED)
+
+        whenever(taskRepository.findById(taskId)).thenReturn(task)
+
+        assertThrows<TaskAccessDeniedException> {
+            taskService.downloadTask(taskId, userId)
+        }
+    }
+
+    @Test
+    fun `downloadTask бросает TaskNotCompletedException для незавершённой задачи`() {
+        val taskId = UUID.randomUUID()
+        val task = Task(id = taskId, userId = userId, status = TaskStatus.PENDING)
+
+        whenever(taskRepository.findById(taskId)).thenReturn(task)
+
+        assertThrows<TaskNotCompletedException> {
+            taskService.downloadTask(taskId, userId)
+        }
     }
 }
