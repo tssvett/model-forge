@@ -40,7 +40,7 @@ class UserRepository(private val jdbcTemplate: JdbcTemplate) {
             "SELECT COUNT(*) FROM users WHERE email = ?",
             Int::class.java, email
         )
-        return (count ?: 0) > 0
+        return count!! > 0
     }
 
     fun findById(id: UUID): User? {

@@ -74,6 +74,6 @@ class OutboxRepository(private val jdbcTemplate: JdbcTemplate) {
         return jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM outbox_events WHERE status = ?",
             Long::class.java, status.name
-        ) ?: 0
+        )!!
     }
 }
