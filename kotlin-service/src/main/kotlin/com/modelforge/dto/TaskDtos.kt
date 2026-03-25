@@ -34,3 +34,11 @@ data class TaskDownloadResult(
     val format: String,
     val generatedAt: Instant
 )
+
+data class PagedResponse<T>(
+    val content: List<T>,
+    val page: Int,
+    val size: Int,
+    val totalElements: Long,
+    val totalPages: Int
+)

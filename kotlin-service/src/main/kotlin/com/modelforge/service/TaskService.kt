@@ -2,12 +2,12 @@ package com.modelforge.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.modelforge.dto.CreateTaskRequest
+import com.modelforge.dto.PagedResponse
 import com.modelforge.dto.TaskCreatedEvent
 import com.modelforge.dto.TaskDownloadResult
 import com.modelforge.dto.TaskResponse
 import com.modelforge.entity.OutboxEvent
 import com.modelforge.entity.Task
-import com.modelforge.entity.TaskStatus
 import com.modelforge.exception.TaskAccessDeniedException
 import com.modelforge.exception.TaskNotFoundException
 import com.modelforge.exception.TaskNotCompletedException
@@ -16,6 +16,7 @@ import com.modelforge.repository.TaskRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import com.modelforge.entity.TaskStatus
 import java.util.UUID
 
 @Service
@@ -70,6 +71,21 @@ class TaskService(
 
     fun getUserTasks(userId: UUID): List<TaskResponse> {
         return taskRepository.findByUserId(userId).map { toResponse(it) }
+    }
+
+    fun getUserTasksPaged(userId: UUID, page: Int, size: Int, status: TaskStatus?): PagedResponse<TaskResponse> {
+        val offset = page.toLong() * size
+        val tasks = taskRepository.findByUserIdPaged(userId, status, offset, size)
+        val totalElements = taskRepository.countByUserId(userId, status)
+        val totalPages = if (totalElements == 0L) 0 else ((totalElements - 1) / size + 1).toInt()
+
+        return PagedResponse(
+            content = tasks.map { toResponse(it) },
+            page = page,
+            size = size,
+            totalElements = totalElements,
+            totalPages = totalPages
+        )
     }
 
     fun downloadTask(taskId: UUID, userId: UUID): TaskDownloadResult {

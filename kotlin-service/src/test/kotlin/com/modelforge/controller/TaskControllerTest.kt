@@ -81,7 +81,7 @@ class TaskControllerTest {
     }
 
     @Test
-    fun `GET tasks возвращает список задач пользователя`() {
+    fun `GET tasks возвращает страницу задач пользователя`() {
         // Создаем задачу
         val request = CreateTaskRequest(prompt = "test-list")
         mockMvc.post("/api/tasks") {
@@ -94,8 +94,60 @@ class TaskControllerTest {
             header("Authorization", "Bearer $authToken")
         }.andExpect {
             status { isOk() }
-            jsonPath("$") { isArray() }
-            jsonPath("$[0].prompt") { value("test-list") }
+            jsonPath("$.content") { isArray() }
+            jsonPath("$.content[0].prompt") { value("test-list") }
+            jsonPath("$.page") { value(0) }
+            jsonPath("$.size") { value(20) }
+            jsonPath("$.totalElements") { exists() }
+            jsonPath("$.totalPages") { exists() }
+        }
+    }
+
+    @Test
+    fun `GET tasks с параметрами пагинации`() {
+        // Создаем 2 задачи
+        repeat(2) {
+            mockMvc.post("/api/tasks") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(CreateTaskRequest(prompt = "paged-$it"))
+                header("Authorization", "Bearer $authToken")
+            }
+        }
+
+        mockMvc.get("/api/tasks?page=0&size=1") {
+            header("Authorization", "Bearer $authToken")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.content.length()") { value(1) }
+            jsonPath("$.size") { value(1) }
+            jsonPath("$.totalPages") { value(2) }
+        }
+    }
+
+    @Test
+    fun `GET tasks с фильтрацией по статусу`() {
+        mockMvc.post("/api/tasks") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(CreateTaskRequest(prompt = "filter-test"))
+            header("Authorization", "Bearer $authToken")
+        }
+
+        // All new tasks are PENDING, filtering by COMPLETED should return empty
+        mockMvc.get("/api/tasks?status=COMPLETED") {
+            header("Authorization", "Bearer $authToken")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.content") { isArray() }
+            jsonPath("$.content.length()") { value(0) }
+            jsonPath("$.totalElements") { value(0) }
+        }
+
+        // Filtering by PENDING should return the task
+        mockMvc.get("/api/tasks?status=PENDING") {
+            header("Authorization", "Bearer $authToken")
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.content.length()") { exists() }
         }
     }
 

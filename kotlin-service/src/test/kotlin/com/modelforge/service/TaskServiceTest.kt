@@ -111,6 +111,64 @@ class TaskServiceTest {
     }
 
     @Test
+    fun `getUserTasksPaged возвращает страницу задач`() {
+        val tasks = listOf(
+            Task(userId = userId, prompt = "task1"),
+            Task(userId = userId, prompt = "task2")
+        )
+
+        whenever(taskRepository.findByUserIdPaged(userId, null, 0L, 20)).thenReturn(tasks)
+        whenever(taskRepository.countByUserId(userId, null)).thenReturn(2L)
+
+        val response = taskService.getUserTasksPaged(userId, page = 0, size = 20, status = null)
+
+        assertEquals(2, response.content.size)
+        assertEquals(0, response.page)
+        assertEquals(20, response.size)
+        assertEquals(2L, response.totalElements)
+        assertEquals(1, response.totalPages)
+    }
+
+    @Test
+    fun `getUserTasksPaged фильтрует по статусу`() {
+        val tasks = listOf(
+            Task(userId = userId, prompt = "completed-task", status = TaskStatus.COMPLETED)
+        )
+
+        whenever(taskRepository.findByUserIdPaged(userId, TaskStatus.COMPLETED, 0L, 20)).thenReturn(tasks)
+        whenever(taskRepository.countByUserId(userId, TaskStatus.COMPLETED)).thenReturn(1L)
+
+        val response = taskService.getUserTasksPaged(userId, page = 0, size = 20, status = TaskStatus.COMPLETED)
+
+        assertEquals(1, response.content.size)
+        assertEquals(TaskStatus.COMPLETED, response.content[0].status)
+        assertEquals(1L, response.totalElements)
+    }
+
+    @Test
+    fun `getUserTasksPaged корректно рассчитывает totalPages`() {
+        whenever(taskRepository.findByUserIdPaged(eq(userId), eq(null), eq(0L), eq(10))).thenReturn(emptyList())
+        whenever(taskRepository.countByUserId(userId, null)).thenReturn(25L)
+
+        val response = taskService.getUserTasksPaged(userId, page = 0, size = 10, status = null)
+
+        assertEquals(3, response.totalPages)
+        assertEquals(25L, response.totalElements)
+    }
+
+    @Test
+    fun `getUserTasksPaged возвращает пустую страницу`() {
+        whenever(taskRepository.findByUserIdPaged(eq(userId), eq(null), eq(0L), eq(20))).thenReturn(emptyList())
+        whenever(taskRepository.countByUserId(userId, null)).thenReturn(0L)
+
+        val response = taskService.getUserTasksPaged(userId, page = 0, size = 20, status = null)
+
+        assertEquals(0, response.content.size)
+        assertEquals(0, response.totalPages)
+        assertEquals(0L, response.totalElements)
+    }
+
+    @Test
     fun `downloadTask возвращает файл для завершённой задачи`() {
         val taskId = UUID.randomUUID()
         val fileBytes = "fake-model-data".toByteArray()

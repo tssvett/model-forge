@@ -51,6 +51,34 @@ class TaskRepository(private val jdbcTemplate: JdbcTemplate) {
         )
     }
 
+    fun findByUserIdPaged(userId: UUID, status: TaskStatus?, offset: Long, limit: Int): List<Task> {
+        val sql = StringBuilder("SELECT * FROM tasks WHERE user_id = ?")
+        val params = mutableListOf<Any>(userId)
+
+        if (status != null) {
+            sql.append(" AND status = ?")
+            params.add(status.name)
+        }
+
+        sql.append(" ORDER BY created_at DESC LIMIT ? OFFSET ?")
+        params.add(limit)
+        params.add(offset)
+
+        return jdbcTemplate.query(sql.toString(), rowMapper, *params.toTypedArray())
+    }
+
+    fun countByUserId(userId: UUID, status: TaskStatus?): Long {
+        val sql = StringBuilder("SELECT COUNT(*) FROM tasks WHERE user_id = ?")
+        val params = mutableListOf<Any>(userId)
+
+        if (status != null) {
+            sql.append(" AND status = ?")
+            params.add(status.name)
+        }
+
+        return jdbcTemplate.queryForObject(sql.toString(), Long::class.java, *params.toTypedArray())!!
+    }
+
     fun updateStatus(id: UUID, status: TaskStatus) {
         jdbcTemplate.update(
             "UPDATE tasks SET status = ?, updated_at = NOW() WHERE id = ?",
