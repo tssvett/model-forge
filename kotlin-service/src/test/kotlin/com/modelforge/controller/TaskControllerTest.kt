@@ -11,10 +11,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.get
+import java.util.UUID
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -27,6 +29,9 @@ class TaskControllerTest {
 
     @Autowired
     lateinit var objectMapper: ObjectMapper
+
+    @Autowired
+    lateinit var jdbcTemplate: JdbcTemplate
 
     private lateinit var authToken: String
 
@@ -118,6 +123,42 @@ class TaskControllerTest {
     fun `GET tasks возвращает 403 без токена`() {
         mockMvc.get("/api/tasks").andExpect {
             status { isForbidden() }
+        }
+    }
+
+    @Test
+    fun `GET tasks download возвращает 403 без токена`() {
+        mockMvc.get("/api/tasks/${UUID.randomUUID()}/download").andExpect {
+            status { isForbidden() }
+        }
+    }
+
+    @Test
+    fun `GET tasks download возвращает 409 для незавершённой задачи`() {
+        val request = CreateTaskRequest(prompt = "test-download-pending")
+        val createResult = mockMvc.post("/api/tasks") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(request)
+            header("Authorization", "Bearer $authToken")
+        }.andReturn()
+
+        val taskId = objectMapper.readTree(createResult.response.contentAsString).get("id").asText()
+
+        mockMvc.get("/api/tasks/$taskId/download") {
+            header("Authorization", "Bearer $authToken")
+        }.andExpect {
+            status { isConflict() }
+            jsonPath("$.code") { value(409) }
+        }
+    }
+
+    @Test
+    fun `GET tasks download возвращает 404 для несуществующей задачи`() {
+        mockMvc.get("/api/tasks/${UUID.randomUUID()}/download") {
+            header("Authorization", "Bearer $authToken")
+        }.andExpect {
+            status { isNotFound() }
+            jsonPath("$.code") { value(404) }
         }
     }
 }

@@ -3,9 +3,14 @@ package com.modelforge.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.modelforge.dto.CreateTaskRequest
 import com.modelforge.dto.TaskCreatedEvent
+import com.modelforge.dto.TaskDownloadResult
 import com.modelforge.dto.TaskResponse
 import com.modelforge.entity.OutboxEvent
 import com.modelforge.entity.Task
+import com.modelforge.entity.TaskStatus
+import com.modelforge.exception.TaskAccessDeniedException
+import com.modelforge.exception.TaskNotFoundException
+import com.modelforge.exception.TaskNotCompletedException
 import com.modelforge.repository.OutboxRepository
 import com.modelforge.repository.TaskRepository
 import org.slf4j.LoggerFactory
@@ -17,7 +22,8 @@ import java.util.UUID
 class TaskService(
     private val taskRepository: TaskRepository,
     private val outboxRepository: OutboxRepository,
-    private val objectMapper: ObjectMapper
+    private val objectMapper: ObjectMapper,
+    private val minioService: MinioService
 ) {
 
     private val logger = LoggerFactory.getLogger(TaskService::class.java)
@@ -64,6 +70,34 @@ class TaskService(
 
     fun getUserTasks(userId: UUID): List<TaskResponse> {
         return taskRepository.findByUserId(userId).map { toResponse(it) }
+    }
+
+    fun downloadTask(taskId: UUID, userId: UUID): TaskDownloadResult {
+        val task = taskRepository.findById(taskId)
+            ?: throw TaskNotFoundException(taskId)
+
+        if (task.userId != userId) {
+            throw TaskAccessDeniedException(taskId)
+        }
+
+        if (task.status != TaskStatus.COMPLETED) {
+            throw TaskNotCompletedException(taskId, task.status)
+        }
+
+        val outputKey = task.s3OutputKey
+            ?: throw IllegalStateException("Task $taskId has no output key")
+
+        val fileBytes = minioService.downloadFile(outputKey)
+        val format = minioService.getFileFormat(outputKey)
+
+        logger.info("Downloaded model for task {}, format={}, size={} bytes", taskId, format, fileBytes.size)
+
+        return TaskDownloadResult(
+            taskId = taskId,
+            fileBytes = fileBytes,
+            format = format,
+            generatedAt = task.updatedAt
+        )
     }
 
     private fun toResponse(task: Task): TaskResponse {
