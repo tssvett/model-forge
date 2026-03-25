@@ -2,7 +2,6 @@ package com.modelforge.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.modelforge.config.TestKafkaConfig
-import com.modelforge.dto.CreateTaskRequest
 import com.modelforge.dto.RegisterRequest
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -12,8 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.multipart
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.get
 import java.util.UUID
@@ -52,29 +53,56 @@ class TaskControllerTest {
         authToken = body.get("accessToken").asText()
     }
 
+    private fun createTestFile(
+        name: String = "test.jpg",
+        content: ByteArray = "fake-image-data".toByteArray(),
+        contentType: String = "image/jpeg"
+    ): MockMultipartFile = MockMultipartFile("file", name, contentType, content)
+
+    private fun createTaskViaMultipart(prompt: String? = null, file: MockMultipartFile = createTestFile()) =
+        mockMvc.multipart("/api/tasks") {
+            file(file)
+            if (prompt != null) param("prompt", prompt)
+            header("Authorization", "Bearer $authToken")
+        }
+
     @Test
     fun `POST tasks возвращает 201 с созданной задачей`() {
-        val request = CreateTaskRequest(prompt = "Сгенерировать 3D-модель стула")
+        createTaskViaMultipart(prompt = "Сгенерировать 3D-модель стула")
+            .andExpect {
+                status { isCreated() }
+                jsonPath("$.id") { exists() }
+                jsonPath("$.status") { value("PENDING") }
+                jsonPath("$.prompt") { value("Сгенерировать 3D-модель стула") }
+                jsonPath("$.s3InputKey") { exists() }
+            }
+    }
 
-        mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-            header("Authorization", "Bearer $authToken")
-        }.andExpect {
-            status { isCreated() }
-            jsonPath("$.id") { exists() }
-            jsonPath("$.status") { value("PENDING") }
-            jsonPath("$.prompt") { value("Сгенерировать 3D-модель стула") }
-        }
+    @Test
+    fun `POST tasks возвращает 400 для неподдерживаемого формата`() {
+        val file = createTestFile(name = "test.gif", contentType = "image/gif")
+        createTaskViaMultipart(file = file)
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.code") { value(400) }
+            }
+    }
+
+    @Test
+    fun `POST tasks возвращает 400 для пустого файла`() {
+        val file = MockMultipartFile("file", "empty.jpg", "image/jpeg", ByteArray(0))
+        createTaskViaMultipart(file = file)
+            .andExpect {
+                status { isBadRequest() }
+                jsonPath("$.code") { value(400) }
+            }
     }
 
     @Test
     fun `POST tasks возвращает 403 без токена`() {
-        val request = CreateTaskRequest(prompt = "test")
-
-        mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
+        val file = createTestFile()
+        mockMvc.multipart("/api/tasks") {
+            file(file)
         }.andExpect {
             status { isForbidden() }
         }
@@ -82,13 +110,7 @@ class TaskControllerTest {
 
     @Test
     fun `GET tasks возвращает страницу задач пользователя`() {
-        // Создаем задачу
-        val request = CreateTaskRequest(prompt = "test-list")
-        mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-            header("Authorization", "Bearer $authToken")
-        }
+        createTaskViaMultipart(prompt = "test-list")
 
         mockMvc.get("/api/tasks") {
             header("Authorization", "Bearer $authToken")
@@ -105,13 +127,8 @@ class TaskControllerTest {
 
     @Test
     fun `GET tasks с параметрами пагинации`() {
-        // Создаем 2 задачи
         repeat(2) {
-            mockMvc.post("/api/tasks") {
-                contentType = MediaType.APPLICATION_JSON
-                content = objectMapper.writeValueAsString(CreateTaskRequest(prompt = "paged-$it"))
-                header("Authorization", "Bearer $authToken")
-            }
+            createTaskViaMultipart(prompt = "paged-$it")
         }
 
         mockMvc.get("/api/tasks?page=0&size=1") {
@@ -126,13 +143,8 @@ class TaskControllerTest {
 
     @Test
     fun `GET tasks с фильтрацией по статусу`() {
-        mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(CreateTaskRequest(prompt = "filter-test"))
-            header("Authorization", "Bearer $authToken")
-        }
+        createTaskViaMultipart(prompt = "filter-test")
 
-        // All new tasks are PENDING, filtering by COMPLETED should return empty
         mockMvc.get("/api/tasks?status=COMPLETED") {
             header("Authorization", "Bearer $authToken")
         }.andExpect {
@@ -142,7 +154,6 @@ class TaskControllerTest {
             jsonPath("$.totalElements") { value(0) }
         }
 
-        // Filtering by PENDING should return the task
         mockMvc.get("/api/tasks?status=PENDING") {
             header("Authorization", "Bearer $authToken")
         }.andExpect {
@@ -153,12 +164,7 @@ class TaskControllerTest {
 
     @Test
     fun `GET tasks по ID возвращает задачу`() {
-        val request = CreateTaskRequest(prompt = "test-get-by-id")
-        val createResult = mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-            header("Authorization", "Bearer $authToken")
-        }.andReturn()
+        val createResult = createTaskViaMultipart(prompt = "test-get-by-id").andReturn()
 
         val taskId = objectMapper.readTree(createResult.response.contentAsString).get("id").asText()
 
@@ -187,12 +193,7 @@ class TaskControllerTest {
 
     @Test
     fun `GET tasks download возвращает 409 для незавершённой задачи`() {
-        val request = CreateTaskRequest(prompt = "test-download-pending")
-        val createResult = mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
-            header("Authorization", "Bearer $authToken")
-        }.andReturn()
+        val createResult = createTaskViaMultipart(prompt = "test-download-pending").andReturn()
 
         val taskId = objectMapper.readTree(createResult.response.contentAsString).get("id").asText()
 

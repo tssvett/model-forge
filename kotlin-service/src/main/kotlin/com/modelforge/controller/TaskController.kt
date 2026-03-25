@@ -1,14 +1,12 @@
 package com.modelforge.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.modelforge.dto.CreateTaskRequest
 import com.modelforge.dto.ErrorResponse
 import com.modelforge.dto.PagedResponse
 import com.modelforge.dto.TaskResponse
 import com.modelforge.entity.TaskStatus
 import com.modelforge.service.TaskService
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -20,6 +18,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import java.util.UUID
 
 @RestController
@@ -30,21 +29,24 @@ class TaskController(
     private val objectMapper: ObjectMapper
 ) {
 
-    @PostMapping
+    @PostMapping(consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
     @Operation(summary = "Создать задачу на генерацию")
     @ApiResponses(
         ApiResponse(responseCode = "201", description = "Задача создана",
             content = [Content(schema = Schema(implementation = TaskResponse::class))]),
-        ApiResponse(responseCode = "400", description = "Некорректные данные",
+        ApiResponse(responseCode = "400", description = "Некорректный файл (размер/формат)",
             content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
-        ApiResponse(responseCode = "403", description = "Не авторизован")
+        ApiResponse(responseCode = "403", description = "Не авторизован"),
+        ApiResponse(responseCode = "500", description = "Внутренняя ошибка сервера",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))])
     )
     fun createTask(
-        @RequestBody request: CreateTaskRequest,
+        @RequestParam("file") file: MultipartFile,
+        @RequestParam("prompt", required = false) prompt: String?,
         authentication: Authentication
     ): ResponseEntity<TaskResponse> {
         val userId = authentication.principal as UUID
-        val response = taskService.createTask(userId, request)
+        val response = taskService.createTask(userId, file, prompt)
         return ResponseEntity.status(HttpStatus.CREATED).body(response)
     }
 

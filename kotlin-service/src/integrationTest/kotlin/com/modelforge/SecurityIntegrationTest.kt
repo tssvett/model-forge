@@ -10,8 +10,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.multipart
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.get
 
@@ -30,12 +32,14 @@ class SecurityIntegrationTest {
     @Autowired
     lateinit var objectMapper: ObjectMapper
 
+    private fun createTestFile(): MockMultipartFile =
+        MockMultipartFile("file", "test.jpg", "image/jpeg", "fake-image-data".toByteArray())
+
     @Test
     fun `защищённые эндпоинты недоступны без токена`() {
         mockMvc.get("/api/tasks").andExpect { status { isForbidden() } }
-        mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = "{}"
+        mockMvc.multipart("/api/tasks") {
+            file(createTestFile())
         }.andExpect { status { isForbidden() } }
     }
 
@@ -95,9 +99,9 @@ class SecurityIntegrationTest {
         val token2 = registerAndGetToken(email2)
 
         // User1 создаёт задачу
-        mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = """{"prompt":"задача user1"}"""
+        mockMvc.multipart("/api/tasks") {
+            file(createTestFile())
+            param("prompt", "задача user1")
             header("Authorization", "Bearer $token1")
         }.andExpect { status { isCreated() } }
 

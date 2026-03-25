@@ -1,6 +1,7 @@
 package com.modelforge.controller
 
 import com.modelforge.dto.ErrorResponse
+import com.modelforge.exception.InvalidFileException
 import com.modelforge.exception.TaskAccessDeniedException
 import com.modelforge.exception.TaskNotFoundException
 import com.modelforge.exception.TaskNotCompletedException
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import org.springframework.web.multipart.MaxUploadSizeExceededException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -37,6 +39,22 @@ class GlobalExceptionHandler {
         logger.warn("Task not completed: ${e.message}")
         return ResponseEntity.status(HttpStatus.CONFLICT).body(
             ErrorResponse(code = 409, message = e.message ?: "Conflict")
+        )
+    }
+
+    @ExceptionHandler(InvalidFileException::class)
+    fun handleInvalidFile(e: InvalidFileException): ResponseEntity<ErrorResponse> {
+        logger.warn("Invalid file: ${e.message}")
+        return ResponseEntity.badRequest().body(
+            ErrorResponse(code = 400, message = e.message ?: "Invalid file")
+        )
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException::class)
+    fun handleMaxUploadSize(e: MaxUploadSizeExceededException): ResponseEntity<ErrorResponse> {
+        logger.warn("File too large: ${e.message}")
+        return ResponseEntity.badRequest().body(
+            ErrorResponse(code = 400, message = "Файл превышает максимальный размер 10 МБ")
         )
     }
 
