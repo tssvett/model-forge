@@ -106,7 +106,8 @@ class SecurityIntegrationTest {
             header("Authorization", "Bearer $token2")
         }.andExpect {
             status { isOk() }
-            jsonPath("$.length()") { value(0) }
+            jsonPath("$.content.length()") { value(0) }
+            jsonPath("$.totalElements") { value(0) }
         }
 
         // User1 видит свою задачу
@@ -114,8 +115,8 @@ class SecurityIntegrationTest {
             header("Authorization", "Bearer $token1")
         }.andExpect {
             status { isOk() }
-            jsonPath("$.length()") { value(1) }
-            jsonPath("$[0].prompt") { value("задача user1") }
+            jsonPath("$.content.length()") { value(1) }
+            jsonPath("$.content[0].prompt") { value("задача user1") }
         }
     }
 

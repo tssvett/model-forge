@@ -3,7 +3,9 @@ package com.modelforge.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.modelforge.dto.CreateTaskRequest
 import com.modelforge.dto.ErrorResponse
+import com.modelforge.dto.PagedResponse
 import com.modelforge.dto.TaskResponse
+import com.modelforge.entity.TaskStatus
 import com.modelforge.service.TaskService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.ArraySchema
@@ -65,15 +67,26 @@ class TaskController(
     }
 
     @GetMapping
-    @Operation(summary = "Получить все задачи текущего пользователя")
+    @Operation(
+        summary = "Получить задачи текущего пользователя (с пагинацией)",
+        description = "Возвращает список задач с пагинацией и опциональной фильтрацией по статусу"
+    )
     @ApiResponses(
-        ApiResponse(responseCode = "200", description = "Список задач",
-            content = [Content(array = ArraySchema(schema = Schema(implementation = TaskResponse::class)))]),
+        ApiResponse(responseCode = "200", description = "Страница задач",
+            content = [Content(schema = Schema(implementation = PagedResponse::class))]),
+        ApiResponse(responseCode = "400", description = "Некорректные параметры",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
         ApiResponse(responseCode = "403", description = "Не авторизован")
     )
-    fun getUserTasks(authentication: Authentication): ResponseEntity<List<TaskResponse>> {
+    fun getUserTasks(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(required = false) status: TaskStatus?,
+        authentication: Authentication
+    ): ResponseEntity<PagedResponse<TaskResponse>> {
+        val effectiveSize = size.coerceIn(1, 100)
         val userId = authentication.principal as UUID
-        val response = taskService.getUserTasks(userId)
+        val response = taskService.getUserTasksPaged(userId, page, effectiveSize, status)
         return ResponseEntity.ok(response)
     }
 

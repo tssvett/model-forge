@@ -171,9 +171,10 @@ class FullFlowIntegrationTest {
             header("Authorization", "Bearer $accessToken")
         }.andExpect {
             status { isOk() }
-            jsonPath("$") { isArray() }
-            jsonPath("$.length()") { value(1) }
-            jsonPath("$[0].id") { value(taskId) }
+            jsonPath("$.content") { isArray() }
+            jsonPath("$.content.length()") { value(1) }
+            jsonPath("$.content[0].id") { value(taskId) }
+            jsonPath("$.totalElements") { value(1) }
         }
     }
 
@@ -198,7 +199,8 @@ class FullFlowIntegrationTest {
             header("Authorization", "Bearer $accessToken")
         }.andExpect {
             status { isOk() }
-            jsonPath("$.length()") { value(3) }
+            jsonPath("$.content.length()") { value(3) }
+            jsonPath("$.totalElements") { value(3) }
         }
     }
 
