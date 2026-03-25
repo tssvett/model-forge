@@ -88,6 +88,10 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+tasks.named<ProcessResources>("processIntegrationTestResources") {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 val integrationTest by tasks.registering(Test::class) {
     description = "Запуск интеграционных (e2e) тестов"
     group = "verification"
