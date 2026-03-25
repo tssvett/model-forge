@@ -11,3 +11,6 @@ class TaskAccessDeniedException(taskId: UUID) :
 
 class TaskNotCompletedException(taskId: UUID, status: TaskStatus) :
     RuntimeException("Task $taskId is not completed (status: $status)")
+
+class InvalidFileException(message: String) :
+    RuntimeException(message)

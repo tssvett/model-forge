@@ -3,7 +3,6 @@ package com.modelforge
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.modelforge.config.TestKafkaConfig
-import com.modelforge.dto.CreateTaskRequest
 import com.modelforge.dto.LoginRequest
 import com.modelforge.dto.RegisterRequest
 import org.junit.jupiter.api.*
@@ -14,8 +13,10 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.multipart
 import org.springframework.test.web.servlet.post
 import org.springframework.test.web.servlet.get
 
@@ -111,14 +112,20 @@ class FullFlowIntegrationTest {
         }
     }
 
+    private fun createTestFile(
+        name: String = "test.jpg",
+        content: ByteArray = "fake-image-data".toByteArray(),
+        contentType: String = "image/jpeg"
+    ): MockMultipartFile = MockMultipartFile("file", name, contentType, content)
+
     @Test
     @Order(5)
     fun `05 - создание задачи с JWT токеном`() {
-        val request = CreateTaskRequest(prompt = "Сгенерировать 3D-модель стула")
+        val file = createTestFile()
 
-        val result = mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request)
+        val result = mockMvc.multipart("/api/tasks") {
+            file(file)
+            param("prompt", "Сгенерировать 3D-модель стула")
             header("Authorization", "Bearer $accessToken")
         }.andExpect {
             status { isCreated() }
@@ -127,6 +134,7 @@ class FullFlowIntegrationTest {
             jsonPath("$.prompt") { value("Сгенерировать 3D-модель стула") }
             jsonPath("$.userId") { exists() }
             jsonPath("$.createdAt") { exists() }
+            jsonPath("$.s3InputKey") { exists() }
         }.andReturn()
 
         val body = objectMapper.readTree(result.response.contentAsString)
@@ -181,17 +189,15 @@ class FullFlowIntegrationTest {
     @Test
     @Order(9)
     fun `09 - создание нескольких задач и проверка списка`() {
-        val request2 = CreateTaskRequest(prompt = "Вторая модель")
-        mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request2)
+        mockMvc.multipart("/api/tasks") {
+            file(createTestFile())
+            param("prompt", "Вторая модель")
             header("Authorization", "Bearer $accessToken")
         }.andExpect { status { isCreated() } }
 
-        val request3 = CreateTaskRequest(prompt = "Третья модель", s3InputKey = "uploads/input.obj")
-        mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(request3)
+        mockMvc.multipart("/api/tasks") {
+            file(createTestFile(name = "input.png", contentType = "image/png"))
+            param("prompt", "Третья модель")
             header("Authorization", "Bearer $accessToken")
         }.andExpect { status { isCreated() } }
 
@@ -217,9 +223,9 @@ class FullFlowIntegrationTest {
     @Test
     @Order(11)
     fun `11 - запросы без токена возвращают 403`() {
-        mockMvc.post("/api/tasks") {
-            contentType = MediaType.APPLICATION_JSON
-            content = objectMapper.writeValueAsString(CreateTaskRequest(prompt = "test"))
+        mockMvc.multipart("/api/tasks") {
+            file(createTestFile())
+            param("prompt", "test")
         }.andExpect { status { isForbidden() } }
 
         mockMvc.get("/api/tasks").andExpect { status { isForbidden() } }

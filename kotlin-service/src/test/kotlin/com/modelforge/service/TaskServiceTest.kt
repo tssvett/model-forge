@@ -1,10 +1,10 @@
 package com.modelforge.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.modelforge.dto.CreateTaskRequest
 import com.modelforge.entity.OutboxEvent
 import com.modelforge.entity.Task
 import com.modelforge.entity.TaskStatus
+import com.modelforge.exception.InvalidFileException
 import com.modelforge.exception.TaskAccessDeniedException
 import com.modelforge.exception.TaskNotFoundException
 import com.modelforge.exception.TaskNotCompletedException
@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.*
+import org.springframework.mock.web.MockMultipartFile
 import java.util.UUID
 
 class TaskServiceTest {
@@ -27,37 +28,87 @@ class TaskServiceTest {
 
     private val userId = UUID.randomUUID()
 
+    private fun createTestFile(
+        name: String = "test.jpg",
+        content: ByteArray = "fake-image-data".toByteArray(),
+        contentType: String = "image/jpeg"
+    ): MockMultipartFile = MockMultipartFile("file", name, contentType, content)
+
     @Test
     fun `createTask сохраняет задачу и outbox событие`() {
-        val request = CreateTaskRequest(prompt = "Сгенерировать 3D-модель")
+        val file = createTestFile()
 
         whenever(taskRepository.save(any())).thenAnswer { it.arguments[0] as Task }
         whenever(outboxRepository.save(any())).thenAnswer { it.arguments[0] as OutboxEvent }
 
-        val response = taskService.createTask(userId, request)
+        val response = taskService.createTask(userId, file, "Сгенерировать 3D-модель")
 
         assertEquals(userId, response.userId)
         assertEquals(TaskStatus.PENDING, response.status)
         assertEquals("Сгенерировать 3D-модель", response.prompt)
+        assertNotNull(response.s3InputKey)
+        assertTrue(response.s3InputKey!!.startsWith("uploads/"))
+        assertTrue(response.s3InputKey!!.endsWith(".jpg"))
 
         verify(taskRepository).save(any())
         verify(outboxRepository).save(any())
+        verify(minioService).uploadFile(any(), any(), any(), any())
     }
 
     @Test
     fun `createTask создает outbox событие с типом TASK_CREATED`() {
-        val request = CreateTaskRequest(prompt = "test")
+        val file = createTestFile()
 
         whenever(taskRepository.save(any())).thenAnswer { it.arguments[0] as Task }
         whenever(outboxRepository.save(any())).thenAnswer { it.arguments[0] as OutboxEvent }
 
-        taskService.createTask(userId, request)
+        taskService.createTask(userId, file, "test")
 
         val captor = argumentCaptor<OutboxEvent>()
         verify(outboxRepository).save(captor.capture())
 
         assertEquals("TASK_CREATED", captor.firstValue.eventType)
         assertTrue(captor.firstValue.payload.contains("taskId"))
+    }
+
+    @Test
+    fun `createTask бросает InvalidFileException для пустого файла`() {
+        val file = MockMultipartFile("file", "empty.jpg", "image/jpeg", ByteArray(0))
+
+        assertThrows<InvalidFileException> {
+            taskService.createTask(userId, file, null)
+        }
+    }
+
+    @Test
+    fun `createTask бросает InvalidFileException для слишком большого файла`() {
+        val largeContent = ByteArray(11 * 1024 * 1024) // 11 MB
+        val file = createTestFile(content = largeContent)
+
+        assertThrows<InvalidFileException> {
+            taskService.createTask(userId, file, null)
+        }
+    }
+
+    @Test
+    fun `createTask бросает InvalidFileException для неподдерживаемого формата`() {
+        val file = createTestFile(name = "test.gif", contentType = "image/gif")
+
+        assertThrows<InvalidFileException> {
+            taskService.createTask(userId, file, null)
+        }
+    }
+
+    @Test
+    fun `createTask принимает все допустимые форматы`() {
+        whenever(taskRepository.save(any())).thenAnswer { it.arguments[0] as Task }
+        whenever(outboxRepository.save(any())).thenAnswer { it.arguments[0] as OutboxEvent }
+
+        for (ext in listOf("jpg", "jpeg", "png", "webp")) {
+            val file = createTestFile(name = "test.$ext")
+            val response = taskService.createTask(userId, file, null)
+            assertTrue(response.s3InputKey!!.endsWith(".$ext"))
+        }
     }
 
     @Test

@@ -1,13 +1,13 @@
 package com.modelforge.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.modelforge.dto.CreateTaskRequest
 import com.modelforge.dto.PagedResponse
 import com.modelforge.dto.TaskCreatedEvent
 import com.modelforge.dto.TaskDownloadResult
 import com.modelforge.dto.TaskResponse
 import com.modelforge.entity.OutboxEvent
 import com.modelforge.entity.Task
+import com.modelforge.exception.InvalidFileException
 import com.modelforge.exception.TaskAccessDeniedException
 import com.modelforge.exception.TaskNotFoundException
 import com.modelforge.exception.TaskNotCompletedException
@@ -16,6 +16,7 @@ import com.modelforge.repository.TaskRepository
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.multipart.MultipartFile
 import com.modelforge.entity.TaskStatus
 import java.util.UUID
 
@@ -29,12 +30,24 @@ class TaskService(
 
     private val logger = LoggerFactory.getLogger(TaskService::class.java)
 
+    companion object {
+        private const val MAX_FILE_SIZE = 10L * 1024 * 1024 // 10 MB
+        private val ALLOWED_EXTENSIONS = setOf("jpg", "jpeg", "png", "webp")
+    }
+
     @Transactional
-    fun createTask(userId: UUID, request: CreateTaskRequest): TaskResponse {
+    fun createTask(userId: UUID, file: MultipartFile, prompt: String?): TaskResponse {
+        validateFile(file)
+
+        val extension = file.originalFilename?.substringAfterLast('.', "")?.lowercase() ?: ""
+        val s3Key = "uploads/${UUID.randomUUID()}.$extension"
+
+        minioService.uploadFile(s3Key, file.inputStream, file.size, file.contentType ?: "application/octet-stream")
+
         val task = Task(
             userId = userId,
-            prompt = request.prompt,
-            s3InputKey = request.s3InputKey
+            prompt = prompt,
+            s3InputKey = s3Key
         )
 
         taskRepository.save(task)
@@ -56,6 +69,21 @@ class TaskService(
         logger.info("Создана задача {} с outbox событием {}", task.id, outboxEvent.id)
 
         return toResponse(task)
+    }
+
+    private fun validateFile(file: MultipartFile) {
+        if (file.isEmpty) {
+            throw InvalidFileException("Файл не может быть пустым")
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            throw InvalidFileException("Файл превышает максимальный размер 10 МБ")
+        }
+
+        val extension = file.originalFilename?.substringAfterLast('.', "")?.lowercase() ?: ""
+        if (extension !in ALLOWED_EXTENSIONS) {
+            throw InvalidFileException("Неподдерживаемый формат файла: $extension. Допустимые форматы: ${ALLOWED_EXTENSIONS.joinToString(", ")}")
+        }
     }
 
     fun getTask(taskId: UUID, userId: UUID): TaskResponse {
