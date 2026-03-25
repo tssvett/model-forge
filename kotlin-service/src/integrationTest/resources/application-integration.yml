@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:integrationdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
+modelforge:
+  jwt:
+    secret: integration-test-secret-key-minimum-32-characters!!
+    expiration-hours: 1
+  kafka:
+    topic: integration-test-topic
+  outbox:
+    poll-interval-ms: 60000
+    max-retry: 3
+    batch-size: 10
+    retention-days: 7
+    cleanup-cron: "0 0 0 31 12 *"

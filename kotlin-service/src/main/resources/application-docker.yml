@@ -1,0 +1,35 @@
+spring:
+  application:
+    name: ${SERVICE_NAME:modelforge-kotlin-service}
+
+  # PostgreSQL
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:modelforge_db}
+    username: ${POSTGRES_USER:modelforge}
+    password: ${POSTGRES_PASSWORD:changeme}
+    driver-class-name: org.postgresql.Driver
+
+  # Liquibase
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+logging:
+  config: classpath:logback-spring.xml
+
+spring.kafka:
+  bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+
+modelforge:
+  environment: ${ENVIRONMENT:development}
+  version: ${APP_VERSION:0.1.0}
+  jwt:
+    secret: ${JWT_SECRET_KEY}
+    expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+  kafka:
+    topic: ${KAFKA_TOPIC:modelforge.generation.requests}
+  outbox:
+    poll-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:5000}
+    max-retry: ${OUTBOX_MAX_RETRY:3}
+    batch-size: ${OUTBOX_BATCH_SIZE:50}
+    retention-days: ${OUTBOX_RETENTION_DAYS:7}
+    cleanup-cron: ${OUTBOX_CLEANUP_CRON:0 0 3 * * *}
