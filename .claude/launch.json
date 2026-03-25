@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Full Stack (infra + app + logging)",
+      "runtimeExecutable": "docker-compose",
+      "runtimeArgs": ["-f", "deploy/docker-compose.yml", "-f", "deploy/docker-compose.infra.yml", "-f", "deploy/docker-compose.logging.yml", "-f", "deploy/docker-compose.app.yml", "up", "-d", "--build"],
+      "port": 9001
+    },
+    {
+      "name": "Infrastructure Only (Kafka, PostgreSQL, MinIO)",
+      "runtimeExecutable": "docker-compose",
+      "runtimeArgs": ["-f", "deploy/docker-compose.yml", "-f", "deploy/docker-compose.infra.yml", "up", "-d"],
+      "port": 9001
+    },
+    {
+      "name": "ML Worker (Python)",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "modelforge.worker.main"],
+      "port": 0
+    }
+  ]
+}
