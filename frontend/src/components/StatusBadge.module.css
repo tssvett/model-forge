@@ -1,0 +1,29 @@
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pending {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.processing {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
+.completed {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.failed {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
