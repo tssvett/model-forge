@@ -10,6 +10,8 @@ ModelForge is a platform for generating 3D models from images. It consists of tw
 
 2. **ML Service** (`ml-service/`) — Python worker that consumes tasks from Kafka, downloads images from MinIO (S3-compatible), runs ML inference, and uploads results back to MinIO, tracking status in PostgreSQL.
 
+3. **Frontend** (`frontend/`) — React SPA built with Vite. Provides user authentication, task creation with image upload, real-time task tracking via polling, and 3D model download. See `frontend/README.md` for full documentation.
+
 ## Build & Run Commands
 
 ### Full stack (from `deploy/` directory)
