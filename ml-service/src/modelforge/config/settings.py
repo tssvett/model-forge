@@ -5,8 +5,8 @@ from typing import Optional, Literal
 
 class Settings(BaseSettings):
     """
-    Конфигурация приложения ModelForge ML Worker.
-    Валидация переменных окружения при старте.
+    ModelForge ML Worker configuration.
+    Validates environment variables at startup.
     """
 
     # === Kafka ===
@@ -98,7 +98,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         extra = "ignore"
-        # Позволяет использовать alias в env-переменных: LOG_LEVEL вместо log_level
+        # Allow uppercase env var names: LOG_LEVEL instead of log_level
         alias_generator = lambda s: s.upper()
         populate_by_name = True
 
@@ -109,5 +109,5 @@ class Settings(BaseSettings):
         return v
 
 
-# Глобальный инстанс для удобства
+# Global singleton for convenience
 settings = Settings()

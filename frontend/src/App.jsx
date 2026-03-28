@@ -7,6 +7,7 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import TaskCreate from './pages/TaskCreate'
 import TaskDetail from './pages/TaskDetail'
+import Settings from './pages/Settings'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tasks/new" element={<TaskCreate />} />
             <Route path="/tasks/:id" element={<TaskDetail />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

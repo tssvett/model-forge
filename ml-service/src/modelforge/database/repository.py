@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional
 
 import psycopg2
 
@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 @dataclass
 class TaskEntity:
-    """Entity для задачи генерации."""
+    """Task generation entity."""
     task_id: str
     status: str
     result_path: Optional[str] = None
@@ -22,7 +22,7 @@ class TaskEntity:
 
 
 class TaskRepositoryInterface(ABC):
-    """Интерфейс репозитория задач (Dependency Inversion)."""
+    """Task repository interface (Dependency Inversion)."""
 
     @abstractmethod
     def create(self, task_id: str, status: str) -> None:
@@ -35,7 +35,7 @@ class TaskRepositoryInterface(ABC):
 
 class TaskRepository(TaskRepositoryInterface):
     """
-    Реализация репозитория для PostgreSQL.
+    PostgreSQL repository implementation.
     Updates the Kotlin service's tasks table (id UUID PK, status, s3_output_key).
     """
 
@@ -72,3 +72,17 @@ class TaskRepository(TaskRepositoryInterface):
         conn.commit()
         cur.close()
         conn.close()
+
+    def get_app_settings(self) -> Dict[str, str]:
+        """Read runtime ML settings from app_settings table."""
+        conn = self._get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("SELECT key, value FROM app_settings")
+            return {row[0]: row[1] for row in cur.fetchall()}
+        except Exception as e:
+            logger.warning("Could not read app_settings: %s", e)
+            return {}
+        finally:
+            cur.close()
+            conn.close()

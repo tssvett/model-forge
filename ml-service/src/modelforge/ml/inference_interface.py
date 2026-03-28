@@ -1,20 +1,19 @@
 from abc import ABC, abstractmethod
-from PIL import Image
 from typing import Dict, Any, Optional
+
+from PIL import Image
 
 
 class ModelInferenceResult:
-    """
-    Унифицированный результат работы ML-модели.
-    """
+    """Unified result of an ML model inference run."""
 
     def __init__(
-            self,
-            success: bool,
-            mesh_bytes: Optional[bytes] = None,
-            texture_bytes: Optional[bytes] = None,
-            metrics: Optional[Dict[str, Any]] = None,
-            error: Optional[str] = None
+        self,
+        success: bool,
+        mesh_bytes: Optional[bytes] = None,
+        texture_bytes: Optional[bytes] = None,
+        metrics: Optional[Dict[str, Any]] = None,
+        error: Optional[str] = None,
     ):
         self.success = success
         self.mesh_bytes = mesh_bytes
@@ -25,24 +24,24 @@ class ModelInferenceResult:
 
 class ModelInferenceInterface(ABC):
     """
-    Абстрактный интерфейс для ML-модели.
+    Abstract interface for an ML inference backend.
 
-    Позволяет менять реализацию (Mock -> TripoSR -> другая модель)
-    без изменения кода в TaskProcessor.
+    Allows swapping implementations (Mock -> TripoSR -> other model)
+    without changing TaskProcessor code.
     """
 
     @abstractmethod
     def is_available(self) -> bool:
-        """Проверяет, готова ли модель к работе (загружена, есть GPU и т.д.)."""
+        """Check whether the model is ready (loaded, GPU present, etc.)."""
         pass
 
     @abstractmethod
     def infer(self, image: Image.Image, params: Dict[str, Any]) -> ModelInferenceResult:
         """
-        Запускает инференс.
+        Run inference on an image.
 
-        :param image: PIL Image (уже предобработанное)
-        :param params: Словарь параметров (разрешение, формат и т.д.)
-        :return: Объект с результатами
+        :param image: PIL Image (already preprocessed)
+        :param params: Parameter dict (resolution, format, etc.)
+        :return: Inference result object
         """
         pass

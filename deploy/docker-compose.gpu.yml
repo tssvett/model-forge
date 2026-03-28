@@ -1,0 +1,24 @@
+version: '3.8'
+
+# GPU overlay — use with docker-compose.app.yml to enable NVIDIA GPU for ML worker.
+# Requires: nvidia-container-toolkit installed on the host.
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.infra.yml \
+#     -f docker-compose.app.yml -f docker-compose.gpu.yml up -d --build
+
+services:
+  ml-worker:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      ML_MOCK_MODE: "false"
+      TRIPSR_DEVICE: "cuda:0"
+      TORCH_NUM_THREADS: 4
+    mem_limit: 4g
+    shm_size: '2g'
