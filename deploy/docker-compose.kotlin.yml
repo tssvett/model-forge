@@ -34,6 +34,10 @@ services:
       ENVIRONMENT: ${ENVIRONMENT}
       APP_VERSION: ${APP_VERSION}
       JAVA_OPTS: ${KOTLIN_SERVICE_JAVA_OPTS}
+      MINIO_ENDPOINT: http://minio:${MINIO_PORT}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${S3_BUCKET}
     networks:
       - modelforge-net
     mem_limit: ${KOTLIN_SERVICE_MEM_LIMIT}
