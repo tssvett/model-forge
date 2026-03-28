@@ -51,13 +51,15 @@ class S3StorageService:
         return path
 
     def download_file(self, s3_path: str) -> bytes:
-        """Скачивает файл из S3 по пути s3://bucket/key."""
-        if not s3_path.startswith("s3://"):
-            raise ValueError(f"Invalid S3 path: {s3_path}")
-
-        parts = s3_path[5:].split('/', 1)
-        bucket = parts[0]
-        key = parts[1] if len(parts) > 1 else ""
+        """Скачивает файл из S3 по пути s3://bucket/key или просто key."""
+        if s3_path.startswith("s3://"):
+            parts = s3_path[5:].split('/', 1)
+            bucket = parts[0]
+            key = parts[1] if len(parts) > 1 else ""
+        else:
+            # Plain key — use configured bucket
+            bucket = self.settings.s3_bucket
+            key = s3_path
 
         response = self._client.get_object(Bucket=bucket, Key=key)
         return response['Body'].read()

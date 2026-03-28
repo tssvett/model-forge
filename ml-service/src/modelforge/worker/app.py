@@ -59,8 +59,11 @@ class App:
             for task_data in self.consumer.consume():
                 if not self._running:
                     break
-                self.repository.create(task_data.get("task_id"), 'PENDING')
-                self.processor.process(task_data)
+                # Support both snake_case (legacy) and camelCase (Kotlin service) formats
+                task_id = task_data.get("task_id") or task_data.get("taskId", "unknown")
+                normalized = self._normalize_task(task_data, task_id)
+                self.repository.create(task_id, 'PENDING')
+                self.processor.process(normalized)
         except KeyboardInterrupt:
             logger.info("Keyboard interrupt received.")
         except Exception as e:
@@ -68,6 +71,19 @@ class App:
             sys.exit(1)
         finally:
             self.shutdown()
+
+    @staticmethod
+    def _normalize_task(task_data: dict, task_id: str) -> dict:
+        """Normalize task message from Kotlin service (camelCase) to ML worker format (snake_case)."""
+        if "input" in task_data and "s3_path" in task_data.get("input", {}):
+            return task_data  # Already in legacy/expected format
+
+        s3_path = task_data.get("s3InputKey") or task_data.get("s3_input_key", "")
+        return {
+            "task_id": task_id,
+            "input": {"s3_path": s3_path},
+            "params": {"output_format": "glb"}
+        }
 
     def shutdown(self) -> None:
         """Корректное завершение работы."""

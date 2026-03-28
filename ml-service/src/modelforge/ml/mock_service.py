@@ -35,9 +35,12 @@ class MockInferenceService(ModelInferenceInterface):
         # 2. Генерация простого 3D объекта (Куб) вместо сложной модели
         mesh = trimesh.creation.box(extents=[1, 1, 1])
 
-        # Экспортируем в байты (как будет делать реальная модель)
+        # Assign vertex colors for visual appeal in GLB viewer
+        mesh.visual.vertex_colors = [100, 149, 237, 255]  # Cornflower blue
+
+        # Экспортируем в GLB (binary glTF) — supported by model-viewer
         with io.BytesIO() as f:
-            mesh.export(f, file_type='obj')
+            mesh.export(f, file_type='glb')
             mesh_bytes = f.getvalue()
 
         # 3. Генерация фейковой текстуры (серый квадрат)

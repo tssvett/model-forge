@@ -51,7 +51,7 @@ class TaskProcessor:
         params = task_data.get("params", {})
 
         input_s3_path = input_config.get("s3_path")
-        output_format = params.get("output_format", "obj")
+        output_format = params.get("output_format", "glb")
 
         logger.info(f"🚀 Starting task {task_id} for {input_s3_path}")
 
@@ -90,8 +90,8 @@ class TaskProcessor:
                 "metrics": result.metrics
             }
 
-            # 6. Обновляем статус + сохраняем результат
-            self.repository.update_status(task_id, 'COMPLETED', json.dumps(db_result))
+            # 6. Обновляем статус + сохраняем результат (s3_output_key = mesh S3 key)
+            self.repository.update_status(task_id, 'COMPLETED', mesh_key)
 
             logger.info(f"✅ Task {task_id} completed. Model: {mesh_url}")
             return True
