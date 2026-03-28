@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS app_settings (
 );
 
 --changeset modelforge:004-seed-default-settings
-INSERT INTO app_settings (setting_key, setting_value) VALUES ('ml_mock_mode', 'true') ON CONFLICT (setting_key) DO NOTHING;
-INSERT INTO app_settings (setting_key, setting_value) VALUES ('ml_device', 'cpu') ON CONFLICT (setting_key) DO NOTHING;
+INSERT INTO app_settings (setting_key, setting_value) SELECT 'ml_mock_mode', 'true' WHERE NOT EXISTS (SELECT 1 FROM app_settings WHERE setting_key = 'ml_mock_mode');
+INSERT INTO app_settings (setting_key, setting_value) SELECT 'ml_device', 'cpu' WHERE NOT EXISTS (SELECT 1 FROM app_settings WHERE setting_key = 'ml_device');
