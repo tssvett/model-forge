@@ -1,18 +1,17 @@
+import { TASK_STATUS } from '../utils/constants'
 import styles from './StatusBadge.module.css'
 
-const STATUS_CONFIG = {
-  PENDING: { label: 'Pending', className: 'pending' },
-  PROCESSING: { label: 'Processing', className: 'processing' },
-  COMPLETED: { label: 'Completed', className: 'completed' },
-  FAILED: { label: 'Failed', className: 'failed' },
+const STATUS_MAP = {
+  [TASK_STATUS.PENDING]: styles.pending,
+  [TASK_STATUS.PROCESSING]: styles.processing,
+  [TASK_STATUS.COMPLETED]: styles.completed,
+  [TASK_STATUS.FAILED]: styles.failed,
 }
 
 export default function StatusBadge({ status }) {
-  const config = STATUS_CONFIG[status] || { label: status, className: 'pending' }
-
   return (
-    <span className={`${styles.badge} ${styles[config.className]}`}>
-      {config.label}
+    <span className={`${styles.badge} ${STATUS_MAP[status] || ''}`}>
+      {status}
     </span>
   )
 }

@@ -1,3 +1,4 @@
+import Button from './Button'
 import styles from './Pagination.module.css'
 
 export default function Pagination({ page, totalPages, onPageChange }) {
@@ -5,23 +6,25 @@ export default function Pagination({ page, totalPages, onPageChange }) {
 
   return (
     <div className={styles.pagination}>
-      <button
-        className={styles.btn}
+      <Button
+        variant="secondary"
         onClick={() => onPageChange(page - 1)}
         disabled={page === 0}
+        style={{ padding: '8px 16px', fontSize: '13px' }}
       >
         Previous
-      </button>
+      </Button>
       <span className={styles.info}>
         Page {page + 1} of {totalPages}
       </span>
-      <button
-        className={styles.btn}
+      <Button
+        variant="secondary"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= totalPages - 1}
+        style={{ padding: '8px 16px', fontSize: '13px' }}
       >
         Next
-      </button>
+      </Button>
     </div>
   )
 }

@@ -1,141 +1,135 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { getTask, downloadTask } from '../api/tasks'
-import { parseMultipartResponse } from '../utils/multipart'
+import { Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { useTaskPolling } from '../hooks/useTaskPolling'
+import { useModelDownload } from '../hooks/useModelDownload'
+import { TASK_STATUS } from '../utils/constants'
+import { formatDateTime } from '../utils/format'
 import StatusBadge from '../components/StatusBadge'
+import GlassCard from '../components/GlassCard'
+import Button from '../components/Button'
+import ErrorMessage from '../components/ErrorMessage'
+import LoadingSpinner from '../components/LoadingSpinner'
+import ModelViewer from '../components/ModelViewer'
 import styles from './TaskDetail.module.css'
 
 export default function TaskDetail() {
   const { id } = useParams()
-  const [task, setTask] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [downloading, setDownloading] = useState(false)
+  const { task, loading, error: taskError, setError } = useTaskPolling(id)
+  const {
+    modelBlobUrl, filename, downloading, error: downloadError,
+    triggerFileDownload, isViewerCompatible,
+  } = useModelDownload(id, task?.status === TASK_STATUS.COMPLETED)
 
-  useEffect(() => {
-    let intervalId = null
-
-    const fetchTask = async () => {
-      try {
-        const data = await getTask(id)
-        setTask(data)
-        setLoading(false)
-
-        if (data.status === 'COMPLETED' || data.status === 'FAILED') {
-          if (intervalId) clearInterval(intervalId)
-        }
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load task')
-        setLoading(false)
-        if (intervalId) clearInterval(intervalId)
-      }
-    }
-
-    fetchTask()
-    intervalId = setInterval(fetchTask, 3000)
-
-    return () => {
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [id])
-
-  const handleDownload = async () => {
-    setDownloading(true)
-    try {
-      const { data, contentType } = await downloadTask(id)
-      const { fileBlob, filename } = parseMultipartResponse(data, contentType)
-
-      if (!fileBlob) {
-        setError('Failed to parse download response')
-        return
-      }
-
-      const url = URL.createObjectURL(fileBlob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    } catch (err) {
-      setError(err.response?.data?.message || 'Download failed')
-    } finally {
-      setDownloading(false)
-    }
-  }
-
-  const formatDate = (iso) => {
-    return new Date(iso).toLocaleString()
-  }
+  const error = taskError || downloadError
 
   if (loading) {
-    return <div className={styles.loading}>Loading task...</div>
+    return <LoadingSpinner text="Loading task..." />
   }
 
   if (error && !task) {
-    return <div className={styles.errorPage}>{error}</div>
+    return (
+      <div className="pageEnter" style={{ padding: '48px' }}>
+        <ErrorMessage message={error} />
+      </div>
+    )
   }
 
   return (
-    <div>
+    <div className="pageEnter">
       <Link to="/dashboard" className={styles.backLink}>
-        &larr; Back to Dashboard
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back to Dashboard
       </Link>
 
-      <div className={styles.card}>
+      <GlassCard>
         <div className={styles.header}>
           <h1 className={styles.title}>Task Details</h1>
           <StatusBadge status={task.status} />
         </div>
 
-        {error && <div className={styles.error}>{error}</div>}
+        {error && <ErrorMessage message={error} />}
 
+        {/* 3D Model Viewer */}
+        {task.status === TASK_STATUS.COMPLETED && (
+          <div className={styles.viewerSection}>
+            {isViewerCompatible && modelBlobUrl ? (
+              <ModelViewer src={modelBlobUrl} alt="Generated 3D Model" />
+            ) : downloading ? (
+              <div className={styles.viewerPlaceholder}>
+                <LoadingSpinner text="Loading 3D model..." size="sm" />
+              </div>
+            ) : !isViewerCompatible && modelBlobUrl ? (
+              <div className={styles.viewerPlaceholder}>
+                <p className={styles.noPreview}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+                  </svg>
+                  Preview not available for {filename.split('.').pop().toUpperCase()} format
+                </p>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* Status messages */}
+        {(task.status === TASK_STATUS.PENDING || task.status === TASK_STATUS.PROCESSING) && (
+          <div className={styles.statusMessage}>
+            <div className={styles.pulseOrb} />
+            <span>
+              {task.status === TASK_STATUS.PENDING
+                ? 'Waiting in queue...'
+                : 'Generating your 3D model...'}
+            </span>
+          </div>
+        )}
+
+        {task.status === TASK_STATUS.FAILED && (
+          <div className={styles.failedMessage}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            Generation failed. Please try creating a new task.
+          </div>
+        )}
+
+        {/* Details */}
         <div className={styles.details}>
           <div className={styles.row}>
             <span className={styles.label}>Task ID</span>
             <span className={styles.value}>{task.id}</span>
           </div>
-          {task.prompt && (
-            <div className={styles.row}>
-              <span className={styles.label}>Prompt</span>
-              <span className={styles.value}>{task.prompt}</span>
-            </div>
-          )}
           <div className={styles.row}>
             <span className={styles.label}>Created</span>
-            <span className={styles.value}>{formatDate(task.createdAt)}</span>
+            <span className={styles.value}>{formatDateTime(task.createdAt)}</span>
           </div>
           <div className={styles.row}>
             <span className={styles.label}>Updated</span>
-            <span className={styles.value}>{formatDate(task.updatedAt)}</span>
+            <span className={styles.value}>{formatDateTime(task.updatedAt)}</span>
           </div>
         </div>
 
-        {task.status === 'COMPLETED' && (
-          <button
-            className={styles.downloadBtn}
-            onClick={handleDownload}
-            disabled={downloading}
-          >
-            {downloading ? 'Downloading...' : 'Download 3D Model'}
-          </button>
-        )}
-
-        {task.status === 'FAILED' && (
-          <div className={styles.failedMsg}>
-            Generation failed. Please try creating a new task.
+        {/* Actions */}
+        {task.status === TASK_STATUS.COMPLETED && (
+          <div className={styles.actions}>
+            <Button
+              onClick={triggerFileDownload}
+              loading={downloading}
+              style={{ width: '100%' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download {filename}
+            </Button>
           </div>
         )}
-
-        {(task.status === 'PENDING' || task.status === 'PROCESSING') && (
-          <div className={styles.pollingMsg}>
-            {task.status === 'PENDING'
-              ? 'Task is waiting in queue...'
-              : 'Generating your 3D model...'}
-          </div>
-        )}
-      </div>
+      </GlassCard>
     </div>
   )
 }

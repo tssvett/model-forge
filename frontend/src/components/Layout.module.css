@@ -5,9 +5,13 @@
 }
 
 .header {
-  background-color: var(--color-white);
-  border-bottom: 1px solid var(--color-gray-border);
-  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(11, 17, 32, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .headerInner {
@@ -21,15 +25,24 @@
 }
 
 .logo {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-primary);
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 800;
+  text-decoration: none;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+
+.logo:hover {
   text-decoration: none;
 }
 
 .nav {
   display: flex;
-  gap: 16px;
+  gap: 4px;
   flex: 1;
 }
 
@@ -38,41 +51,27 @@
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
-  padding: 8px 12px;
-  border-radius: var(--radius);
-  transition: background-color 0.15s, color 0.15s;
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  transition: color 0.2s, background-color 0.2s;
+  position: relative;
 }
 
 .navLink:hover {
-  background-color: var(--color-gray-light);
-  color: var(--color-text);
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.05);
   text-decoration: none;
 }
 
 .userSection {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .email {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-}
-
-.logoutBtn {
-  padding: 6px 14px;
-  font-size: 14px;
-  border: 1px solid var(--color-gray-border);
-  border-radius: var(--radius);
-  background: var(--color-white);
-  color: var(--color-text-secondary);
-  transition: background-color 0.15s, color 0.15s;
-}
-
-.logoutBtn:hover {
-  background-color: var(--color-gray-light);
-  color: var(--color-text);
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
 .main {

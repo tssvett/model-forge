@@ -1,29 +1,41 @@
 .badge {
   display: inline-block;
-  padding: 2px 10px;
+  padding: 3px 12px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .pending {
-  background-color: #f3f4f6;
-  color: #6b7280;
+  background: rgba(148, 163, 184, 0.15);
+  color: #94A3B8;
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .processing {
-  background-color: #dbeafe;
-  color: #2563eb;
+  background: rgba(14, 165, 233, 0.15);
+  color: #38BDF8;
+  border: 1px solid rgba(14, 165, 233, 0.25);
+  animation: pulseGlow 2s ease-in-out infinite;
 }
 
 .completed {
-  background-color: #dcfce7;
-  color: #16a34a;
+  background: rgba(52, 211, 153, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(52, 211, 153, 0.25);
 }
 
 .failed {
-  background-color: #fef2f2;
-  color: #dc2626;
+  background: rgba(248, 113, 113, 0.15);
+  color: #F87171;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 6px rgba(14, 165, 233, 0.2); }
+  50% { box-shadow: 0 0 14px rgba(14, 165, 233, 0.4); }
 }
