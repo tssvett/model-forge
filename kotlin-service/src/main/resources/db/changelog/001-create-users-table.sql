@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 --changeset modelforge:001-create-users-table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -9,4 +9,4 @@ CREATE TABLE users (
 );
 
 --changeset modelforge:001-create-users-index
-CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
