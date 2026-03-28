@@ -43,7 +43,7 @@ make full              # все сервисы + логирование
 
 # 3. Открыть в браузере
 #    Frontend:      http://localhost
-#    Swagger API:   http://localhost:8080/swagger-ui.html
+#    Swagger API:   http://localhost:8080/swagger-ui/index.html
 #    MinIO Console: http://localhost:9001  (modelforge_admin / changeme)
 #    Grafana:       http://localhost:3000  (admin / changeme)
 ```
@@ -163,7 +163,7 @@ GitHub Actions пайплайны (`.github/workflows/`):
 
 | Сервис | URL | Логин |
 |--------|-----|-------|
-| Frontend | http://localhost | — |
-| Swagger API | http://localhost:8080/swagger-ui.html | JWT |
-| MinIO Console | http://localhost:9001 | `modelforge_admin` / `changeme` |
-| Grafana | http://localhost:3000 | `admin` / `changeme` |
+| Frontend | [http://localhost](http://localhost) | — |
+| Swagger API | [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) | JWT |
+| MinIO Console | [http://localhost:9001](http://localhost:9001) | `modelforge_admin` / `changeme` |
+| Grafana | [http://localhost:3000](http://localhost:3000) | `admin` / `changeme` |
