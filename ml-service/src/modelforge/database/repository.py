@@ -78,7 +78,7 @@ class TaskRepository(TaskRepositoryInterface):
         conn = self._get_connection()
         cur = conn.cursor()
         try:
-            cur.execute("SELECT key, value FROM app_settings")
+            cur.execute("SELECT setting_key, setting_value FROM app_settings")
             return {row[0]: row[1] for row in cur.fetchall()}
         except Exception as e:
             logger.warning("Could not read app_settings: %s", e)

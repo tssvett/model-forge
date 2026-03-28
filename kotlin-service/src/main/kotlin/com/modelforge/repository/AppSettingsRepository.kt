@@ -9,27 +9,27 @@ class AppSettingsRepository(
 ) {
 
     fun getAll(): Map<String, String> {
-        val sql = """SELECT "key", "value" FROM app_settings"""
+        val sql = "SELECT setting_key, setting_value FROM app_settings"
         val result = mutableMapOf<String, String>()
         jdbcTemplate.query(sql) { rs, _ ->
-            result[rs.getString("key")] = rs.getString("value")
+            result[rs.getString("setting_key")] = rs.getString("setting_value")
         }
         return result
     }
 
     fun get(key: String): String? {
-        val sql = """SELECT "value" FROM app_settings WHERE "key" = ?"""
-        return jdbcTemplate.query(sql, { rs, _ -> rs.getString("value") }, key)
+        val sql = "SELECT setting_value FROM app_settings WHERE setting_key = ?"
+        return jdbcTemplate.query(sql, { rs, _ -> rs.getString("setting_value") }, key)
             .firstOrNull()
     }
 
     fun set(key: String, value: String) {
         val updated = jdbcTemplate.update(
-            """UPDATE app_settings SET "value" = ? WHERE "key" = ?""", value, key
+            "UPDATE app_settings SET setting_value = ? WHERE setting_key = ?", value, key
         )
         if (updated == 0) {
             jdbcTemplate.update(
-                """INSERT INTO app_settings ("key", "value") VALUES (?, ?)""", key, value
+                "INSERT INTO app_settings (setting_key, setting_value) VALUES (?, ?)", key, value
             )
         }
     }

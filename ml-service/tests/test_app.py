@@ -38,6 +38,5 @@ class TestApp:
     def test_app_shutdown(self, mock_storage, mock_repo, mock_consumer, settings):
         """Тест корректного завершения работы."""
         app = App(settings)
-        app._running = True
         app.shutdown()
-        assert app._running == False
+        mock_consumer.return_value.close.assert_called_once()
