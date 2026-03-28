@@ -1,35 +1,34 @@
 """
-Модуль настройки структурированного логирования для ModelForge.
-Логи в формате JSON для совместимости с Loki/Grafana.
+Structured logging configuration for ModelForge.
+JSON format for Loki/Grafana compatibility.
 """
 
 import logging
 import sys
-import os
 from typing import Optional, TYPE_CHECKING
 from pythonjsonlogger import jsonlogger
 
-# Lazy import settings, чтобы избежать циклических зависимостей
+# Lazy import to avoid circular dependencies
 if TYPE_CHECKING:
     from ..config.settings import Settings
 
 
 def setup_logging(settings_obj: "Settings") -> logging.Logger:
     """
-    Настраивает логирование приложения на основе объекта Settings.
+    Configure application logging based on a Settings object.
 
     Args:
-        settings_obj: Экземпляр Settings с конфигурацией
+        settings_obj: Settings instance with logging configuration
 
     Returns:
-        Настроенный root-логгер
+        Configured root logger
     """
     numeric_level = getattr(logging, settings_obj.log_level.upper(), logging.INFO)
 
     root_logger = logging.getLogger()
     root_logger.setLevel(numeric_level)
 
-    # Очищаем старые хендлеры (на случай повторного вызова в тестах)
+    # Clear old handlers (in case of repeated calls in tests)
     if root_logger.hasHandlers():
         root_logger.handlers.clear()
 
@@ -37,22 +36,22 @@ def setup_logging(settings_obj: "Settings") -> logging.Logger:
     handler.setLevel(numeric_level)
 
     if settings_obj.log_format == "json":
-        # JSON-формат для Loki: каждый лог — это объект с полями
+        # JSON format for Loki: each log entry is a structured object
         formatter = jsonlogger.JsonFormatter(
             fmt="%(asctime)s %(name)s %(levelname)s %(message)s %(module)s %(funcName)s %(lineno)d",
-            datefmt="%Y-%m-%dT%H:%M:%S%z"
+            datefmt="%Y-%m-%dT%H:%M:%S%z",
         )
     else:
-        # Человекочитаемый формат для локальной разработки
+        # Human-readable format for local development
         formatter = logging.Formatter(
             fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
 
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
 
-    # Добавляем extra-поля через фильтр
+    # Inject extra fields via filter
     class ServiceFilter(logging.Filter):
         def filter(self, record: logging.LogRecord) -> bool:
             record.service = settings_obj.service_name
@@ -67,7 +66,7 @@ def setup_logging(settings_obj: "Settings") -> logging.Logger:
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
     """
-    Возвращает логгер с указанным именем.
-    Используется в модулях: logger = get_logger(__name__)
+    Return a logger with the given name.
+    Usage: logger = get_logger(__name__)
     """
     return logging.getLogger(name)

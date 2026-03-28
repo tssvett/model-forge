@@ -1,4 +1,3 @@
-# src/modelforge/ml/factory.py
 from .inference_interface import ModelInferenceInterface
 from .mock_service import MockInferenceService
 from ..config import Settings
@@ -9,53 +8,48 @@ logger = get_logger(__name__)
 
 def select_device(preferred: str) -> str:
     """
-    Умный выбор устройства.
-    Пытается импортировать torch. Если нет - возвращает cpu.
+    Smart device selection.
+    Attempts to import torch. Falls back to cpu if unavailable.
     """
     if preferred.startswith("cuda"):
         try:
             import torch
+
             if torch.cuda.is_available():
-                device_name = torch.cuda.get_device_name(0) if torch.cuda.device_count() > 0 else "unknown"
-                logger.info(f"🚀 GPU detected: {device_name}")
+                name = torch.cuda.get_device_name(0) if torch.cuda.device_count() > 0 else "unknown"
+                logger.info("GPU detected: %s", name)
                 return preferred
             else:
-                logger.warning("⚠️ CUDA requested but not available. Falling back to CPU.")
+                logger.warning("CUDA requested but not available. Falling back to CPU.")
                 return "cpu"
         except ImportError:
-            logger.warning("⚠️ torch not installed. Falling back to CPU.")
+            logger.warning("torch not installed. Falling back to CPU.")
             return "cpu"
     return "cpu"
 
 
 def create_inference_service(settings: Settings) -> ModelInferenceInterface:
-    """
-    Factory method для создания ML-сервиса.
-    """
+    """Factory method for creating the ML inference service."""
 
-    # Режим Mock (для тестов нагрузки или если модель не готова)
+    # Mock mode (for load testing or when the model is not ready)
     if settings.ml_mock_mode:
-        logger.info("🔧 Using MockInferenceService (Mock Mode)")
+        logger.info("Using MockInferenceService (mock mode)")
         return MockInferenceService(processing_delay=settings.ml_mock_delay)
 
-    # Режим Real (здесь потом включим TripoSR)
+    # Real mode — TripoSR
     try:
-        logger.info("🔧 Attempting to initialize Real ML Service...")
+        logger.info("Initializing TripoSR inference service...")
+        device = select_device(settings.tripsr_device)
 
-        # TODO: Раскомментировать, когда модель TripoSR будет интегрирована
-        # device = select_device(settings.tripsr_device)
-        # from .tripors_service import TripoRSService
-        # return TripoRSService(device=device, config=settings)
+        from .triposr_service import TripoSRService
 
-        # ВРЕМЕННО: Если реальный код еще не написан, падаем в Mock с предупреждением
-        logger.warning("⚠️ Real ML service not implemented yet. Falling back to Mock.")
-        return MockInferenceService()
+        return TripoSRService(device=device, model_path=settings.tripsr_model_path)
 
     except ImportError as e:
-        logger.error(f"❌ Failed to load Real ML Service: {e}")
-        logger.warning("⚠️ Falling back to MockInferenceService for stability.")
+        logger.error("TripoSR dependencies not installed: %s", e)
+        logger.warning("Falling back to MockInferenceService. Install TripoSR deps or set ML_MOCK_MODE=true.")
         return MockInferenceService()
     except Exception as e:
-        logger.error(f"❌ Unexpected error initializing ML service: {e}")
-        logger.warning("⚠️ Falling back to MockInferenceService for stability.")
+        logger.error("Failed to initialize TripoSR: %s", e)
+        logger.warning("Falling back to MockInferenceService for stability.")
         return MockInferenceService()

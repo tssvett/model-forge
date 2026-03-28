@@ -13,56 +13,54 @@ logger = get_logger(__name__)
 
 class MockInferenceService(ModelInferenceInterface):
     """
-    Mock-реализация для тестов и разработки.
+    Mock implementation for testing and development.
 
-    Имитирует работу модели: спит, генерирует простой куб и фейковые метрики.
-    Позволяет тестировать всю инфраструктуру без реальной ML-модели.
+    Simulates model work: sleeps, generates a simple cube, and returns
+    fake metrics. Useful for testing the full infrastructure without a real model.
     """
 
     def __init__(self, processing_delay: float = 5.0):
         self.processing_delay = processing_delay
-        logger.info("MockInferenceService initialized (Delay: %ss)", processing_delay)
+        logger.info("MockInferenceService initialized (delay: %ss)", processing_delay)
 
     def is_available(self) -> bool:
         return True
 
     def infer(self, image: Image.Image, params: Dict[str, Any]) -> ModelInferenceResult:
-        logger.info(f"🎭 [MOCK] Starting inference for image size {image.size}...")
+        logger.info("[MOCK] Starting inference for image size %s...", image.size)
 
-        # 1. Имитация тяжелого вычисления
+        # 1. Simulate heavy computation
         time.sleep(self.processing_delay)
 
-        # 2. Генерация простого 3D объекта (Куб) вместо сложной модели
+        # 2. Generate a simple 3D cube
         mesh = trimesh.creation.box(extents=[1, 1, 1])
-
-        # Assign vertex colors for visual appeal in GLB viewer
         mesh.visual.vertex_colors = [100, 149, 237, 255]  # Cornflower blue
 
-        # Экспортируем в GLB (binary glTF) — supported by model-viewer
+        # Export as GLB (binary glTF) — supported by model-viewer
         with io.BytesIO() as f:
-            mesh.export(f, file_type='glb')
+            mesh.export(f, file_type="glb")
             mesh_bytes = f.getvalue()
 
-        # 3. Генерация фейковой текстуры (серый квадрат)
-        texture_img = Image.new('RGB', (512, 512), color='gray')
+        # 3. Generate a placeholder texture
+        texture_img = Image.new("RGB", (512, 512), color="gray")
         with io.BytesIO() as f:
-            texture_img.save(f, format='PNG')
+            texture_img.save(f, format="PNG")
             texture_bytes = f.getvalue()
 
-        # 4. Фейковые научные метрики для диплома
-        fake_metrics = {
+        # 4. Fake metrics
+        metrics = {
             "chamfer_distance": 0.042,
             "iou_3d": 0.89,
             "inference_time_sec": self.processing_delay,
             "device_used": "mock_cpu",
-            "mock_mode": True
+            "mock_mode": True,
         }
 
-        logger.info("🎭 [MOCK] Inference completed successfully.")
+        logger.info("[MOCK] Inference completed successfully.")
 
         return ModelInferenceResult(
             success=True,
             mesh_bytes=mesh_bytes,
             texture_bytes=texture_bytes,
-            metrics=fake_metrics
+            metrics=metrics,
         )

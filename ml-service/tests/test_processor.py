@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, MagicMock, patch, ANY
 from PIL import Image
 
 from modelforge.tasks.processor import TaskProcessor
@@ -9,7 +9,9 @@ from modelforge.ml.inference_interface import ModelInferenceResult
 
 @pytest.fixture
 def mock_repository():
-    return Mock()
+    repo = Mock()
+    repo.get_app_settings.return_value = None
+    return repo
 
 
 @pytest.fixture
@@ -42,10 +44,12 @@ def processor(mock_repository, mock_storage, settings):
 
 class TestTaskProcessor:
 
-    def test_process_success(self, processor, mock_repository, mock_storage):
+    @patch('modelforge.tasks.processor.Image')
+    def test_process_success(self, mock_image, processor, mock_repository, mock_storage):
         """Тест успешной обработки задачи."""
         mock_storage.download_file.return_value = b"fake image"
         mock_storage.upload_bytes.side_effect = lambda k, d: f"s3://bucket/{k}"
+        mock_image.open.return_value.convert.return_value = MagicMock()
 
         task_data = {
             "task_id": "test-123",
@@ -60,7 +64,7 @@ class TestTaskProcessor:
         mock_repository.update_status.assert_any_call(
             "test-123",
             'COMPLETED',
-            pytest.any(str)  # JSON string with results
+            ANY  # S3 key string
         )
 
     def test_process_failure_ml_error(self, processor, mock_repository):
