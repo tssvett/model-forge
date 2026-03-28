@@ -8,93 +8,71 @@
 
 .card {
   width: 100%;
-  max-width: 400px;
-  background: var(--color-white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 40px 32px;
+  max-width: 420px;
+  padding: 40px 36px;
 }
 
 .title {
-  font-size: 28px;
-  font-weight: 700;
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 800;
   text-align: center;
-  color: var(--color-primary);
   margin-bottom: 4px;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
 }
 
 .subtitle {
   text-align: center;
   color: var(--color-text-secondary);
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   font-size: 14px;
-}
-
-.error {
-  background-color: #fef2f2;
-  color: var(--color-danger);
-  padding: 10px 14px;
-  border-radius: var(--radius);
-  font-size: 14px;
-  margin-bottom: 16px;
-  border: 1px solid #fecaca;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--color-text);
+  color: var(--color-text-secondary);
 }
 
 .input {
-  padding: 10px 12px;
-  border: 1px solid var(--color-gray-border);
-  border-radius: var(--radius);
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   font-size: 14px;
+  color: var(--color-text-primary);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
 }
 
 .input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-.button {
-  padding: 10px;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius);
-  font-size: 14px;
-  font-weight: 600;
-  transition: background-color 0.15s;
-}
-
-.button:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
-}
-
-.button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-glow);
 }
 
 .footer {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 24px;
   font-size: 14px;
   color: var(--color-text-secondary);
 }

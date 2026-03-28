@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import AnimatedBackground from '../components/AnimatedBackground'
+import GlassCard from '../components/GlassCard'
+import Button from '../components/Button'
+import ErrorMessage from '../components/ErrorMessage'
 import styles from './Login.module.css'
 
 export default function Register() {
@@ -37,11 +41,12 @@ export default function Register() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
+      <AnimatedBackground />
+      <GlassCard glow className={styles.card}>
         <h1 className={styles.title}>ModelForge</h1>
         <p className={styles.subtitle}>Create your account</p>
 
-        {error && <div className={styles.error}>{error}</div>}
+        <ErrorMessage message={error} />
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
@@ -52,6 +57,7 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={styles.input}
+              placeholder="you@example.com"
               required
               autoFocus
             />
@@ -65,6 +71,7 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={styles.input}
+              placeholder="Min 6 characters"
               required
               minLength={6}
             />
@@ -78,19 +85,20 @@ export default function Register() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={styles.input}
+              placeholder="Repeat your password"
               required
             />
           </div>
 
-          <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? 'Creating account...' : 'Register'}
-          </button>
+          <Button type="submit" loading={loading} style={{ width: '100%' }}>
+            Create Account
+          </Button>
         </form>
 
         <p className={styles.footer}>
           Already have an account? <Link to="/login">Sign In</Link>
         </p>
-      </div>
+      </GlassCard>
     </div>
   )
 }

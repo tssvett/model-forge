@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import AnimatedBackground from '../components/AnimatedBackground'
+import GlassCard from '../components/GlassCard'
+import Button from '../components/Button'
+import ErrorMessage from '../components/ErrorMessage'
 import styles from './Login.module.css'
 
 export default function Login() {
@@ -25,11 +29,12 @@ export default function Login() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
+      <AnimatedBackground />
+      <GlassCard glow className={styles.card}>
         <h1 className={styles.title}>ModelForge</h1>
         <p className={styles.subtitle}>Sign in to your account</p>
 
-        {error && <div className={styles.error}>{error}</div>}
+        <ErrorMessage message={error} />
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
@@ -40,6 +45,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={styles.input}
+              placeholder="you@example.com"
               required
               autoFocus
             />
@@ -53,19 +59,20 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={styles.input}
+              placeholder="Your password"
               required
             />
           </div>
 
-          <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+          <Button type="submit" loading={loading} style={{ width: '100%' }}>
+            Sign In
+          </Button>
         </form>
 
         <p className={styles.footer}>
           Don't have an account? <Link to="/register">Register</Link>
         </p>
-      </div>
+      </GlassCard>
     </div>
   )
 }

@@ -1,11 +1,8 @@
 import api from './axios'
 
-export async function createTask(file, prompt, onProgress) {
+export async function createTask(file, onProgress) {
   const formData = new FormData()
   formData.append('file', file)
-  if (prompt) {
-    formData.append('prompt', prompt)
-  }
 
   const response = await api.post('/api/tasks', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },

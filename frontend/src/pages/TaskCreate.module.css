@@ -1,74 +1,89 @@
 .title {
-  font-size: 24px;
+  font-family: var(--font-heading);
+  font-size: 28px;
   font-weight: 700;
-  margin-bottom: 24px;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, var(--color-text-primary), var(--color-text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.error {
-  background-color: #fef2f2;
-  color: var(--color-danger);
-  padding: 10px 14px;
-  border-radius: var(--radius);
+.subtitle {
   font-size: 14px;
-  margin-bottom: 16px;
-  border: 1px solid #fecaca;
+  color: var(--color-text-muted);
+  margin-bottom: 28px;
 }
 
+/* Dropzone */
 .dropzone {
-  border: 2px dashed var(--color-gray-border);
-  border-radius: var(--radius);
-  padding: 48px 24px;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 56px 24px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.15s, background-color 0.15s;
-  margin-bottom: 20px;
+  transition: border-color 0.3s, box-shadow 0.3s, background-color 0.3s;
+  margin-bottom: 24px;
+  position: relative;
 }
 
 .dropzone:hover {
-  border-color: var(--color-primary);
-  background-color: rgba(79, 70, 229, 0.02);
+  border-color: rgba(14, 165, 233, 0.4);
+  background: rgba(14, 165, 233, 0.03);
 }
 
 .dragOver {
-  border-color: var(--color-primary);
-  background-color: rgba(79, 70, 229, 0.05);
+  border-color: var(--color-accent) !important;
+  background: rgba(14, 165, 233, 0.06) !important;
+  box-shadow: 0 0 30px var(--color-accent-glow), inset 0 0 30px rgba(14, 165, 233, 0.04);
 }
 
 .hasFile {
   cursor: default;
-  padding: 24px;
+  padding: 28px;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
+/* Dropzone content */
 .dropzoneContent {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+.uploadIcon {
+  color: var(--color-accent);
+  opacity: 0.7;
+  margin-bottom: 4px;
 }
 
 .dropzoneText {
-  font-size: 16px;
-  color: var(--color-text);
+  font-size: 15px;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 
 .dropzoneHint {
-  font-size: 13px;
-  color: var(--color-text-secondary);
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
+/* Preview */
 .previewContainer {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .previewImage {
   width: 160px;
   height: 160px;
   object-fit: cover;
-  border-radius: var(--radius);
-  border: 1px solid var(--color-gray-border);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.1);
 }
 
 .fileInfo {
@@ -78,55 +93,17 @@
 .fileName {
   font-size: 14px;
   font-weight: 600;
+  color: var(--color-text-primary);
   word-break: break-all;
 }
 
 .fileSize {
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   margin-top: 4px;
 }
 
-.removeBtn {
-  margin-top: 10px;
-  padding: 4px 12px;
-  font-size: 13px;
-  border: 1px solid var(--color-danger);
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--color-danger);
-}
-
-.removeBtn:hover {
-  background-color: #fef2f2;
-}
-
-.field {
-  margin-bottom: 20px;
-}
-
-.label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 6px;
-}
-
-.input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--color-gray-border);
-  border-radius: var(--radius);
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-.input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
+/* Progress */
 .progressWrapper {
   display: flex;
   align-items: center;
@@ -136,45 +113,26 @@
 
 .progressBar {
   flex: 1;
-  height: 8px;
-  background-color: var(--color-gray-light);
-  border-radius: 4px;
+  height: 6px;
+  background: var(--color-surface);
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background-color: var(--color-primary);
-  border-radius: 4px;
-  transition: width 0.2s;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-cyan));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 12px var(--color-accent-glow);
 }
 
 .progressText {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--color-primary);
+  color: var(--color-accent);
   min-width: 40px;
-}
-
-.submitBtn {
-  width: 100%;
-  padding: 12px;
-  background-color: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius);
-  font-size: 15px;
-  font-weight: 600;
-  transition: background-color 0.15s;
-}
-
-.submitBtn:hover:not(:disabled) {
-  background-color: var(--color-primary-hover);
-}
-
-.submitBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  text-align: right;
 }
 
 .hiddenInput {

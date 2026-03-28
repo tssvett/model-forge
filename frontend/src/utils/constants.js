@@ -1,0 +1,13 @@
+export const TASK_STATUS = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+}
+
+export const POLLING_INTERVAL_MS = 3000
+export const PAGE_SIZE = 10
+
+export const TASK_STATUSES_FILTER = [
+  '', 'PENDING', 'PROCESSING', 'COMPLETED', 'FAILED',
+]
