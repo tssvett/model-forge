@@ -11,7 +11,10 @@ class TestApp:
     def settings(self):
         return Settings(worker_mock_delay=0)
 
-    def test_create_app(self, settings):
+    @patch('modelforge.worker.app.KafkaConsumerService')
+    @patch('modelforge.worker.app.TaskRepository')
+    @patch('modelforge.worker.app.S3StorageService')
+    def test_create_app(self, mock_storage, mock_repo, mock_consumer, settings):
         """Тест factory function."""
         app = create_app(settings)
         assert isinstance(app, App)
@@ -29,7 +32,10 @@ class TestApp:
         assert app.storage is not None
         assert app.processor is not None
 
-    def test_app_shutdown(self, settings):
+    @patch('modelforge.worker.app.KafkaConsumerService')
+    @patch('modelforge.worker.app.TaskRepository')
+    @patch('modelforge.worker.app.S3StorageService')
+    def test_app_shutdown(self, mock_storage, mock_repo, mock_consumer, settings):
         """Тест корректного завершения работы."""
         app = App(settings)
         app._running = True
