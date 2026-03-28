@@ -1,7 +1,7 @@
 --liquibase formatted sql
 
 --changeset modelforge:003-create-outbox-events-table
-CREATE TABLE outbox_events (
+CREATE TABLE IF NOT EXISTS outbox_events (
     id UUID PRIMARY KEY,
     event_type VARCHAR(100) NOT NULL,
     payload TEXT NOT NULL,
@@ -12,5 +12,5 @@ CREATE TABLE outbox_events (
 );
 
 --changeset modelforge:003-create-outbox-events-indexes
-CREATE INDEX idx_outbox_events_status ON outbox_events(status);
-CREATE INDEX idx_outbox_events_created_at ON outbox_events(created_at);
+CREATE INDEX IF NOT EXISTS idx_outbox_events_status ON outbox_events(status);
+CREATE INDEX IF NOT EXISTS idx_outbox_events_created_at ON outbox_events(created_at);
