@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS outbox_events (
     event_type VARCHAR(100) NOT NULL,
     payload TEXT NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     published_at TIMESTAMP,
     retry_count INT NOT NULL DEFAULT 0
 );
