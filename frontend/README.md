@@ -71,6 +71,7 @@ graph TD
         ProtectedRoute[ProtectedRoute]
         StatusBadge[StatusBadge]
         Pagination[Pagination]
+        ModelViewer3D[ModelViewer]
     end
 
     subgraph State
@@ -110,6 +111,7 @@ graph TD
     TaskCreate --> Validation
     TaskDetail --> TasksAPI
     TaskDetail --> Multipart
+    TaskDetail --> ModelViewer3D
     TaskDetail --> StatusBadge
 
     AuthAPI --> Axios
@@ -131,6 +133,7 @@ frontend/
 │   │   ├── ProtectedRoute.jsx  # Auth guard → redirects to /login
 │   │   ├── StatusBadge.jsx     # Task status visual indicator
 │   │   ├── Pagination.jsx      # Page navigation controls
+│   │   ├── ModelViewer.jsx     # 3D GLB model viewer (@google/model-viewer)
 │   │   └── *.module.css        # Component-scoped styles
 │   ├── context/                # React Context providers
 │   │   └── AuthContext.jsx     # Auth state, JWT decode, login/logout
@@ -177,6 +180,7 @@ frontend/
 | Language | JavaScript (JSX) | ES2020+ |
 | Styling | CSS Modules | — |
 | Production Server | Nginx | Alpine |
+| 3D Viewer | Google Model Viewer | 4.2.0 |
 | Containerization | Docker (multi-stage) | Node 18 + Nginx |
 
 ## Setup & Installation
@@ -572,7 +576,6 @@ graph TD
 ## Future Improvements
 
 - **WebSocket notifications** — Replace polling with real-time push updates for task status
-- **3D model viewer** — In-browser preview of generated GLB models using Three.js
 - **Dark mode** — Theme toggle with CSS variable switching
 - **Internationalization (i18n)** — Multi-language support (Russian / English)
 - **Offline support** — Service worker for caching static assets and pending uploads

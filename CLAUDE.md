@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ModelForge is a platform for generating 3D models from images. It consists of two services:
+ModelForge is a platform for generating 3D models from images. It consists of three components:
 
 1. **Kotlin Service** (`kotlin-service/`) — Spring Boot REST API gateway. Handles user authentication (JWT), task management, file uploads to MinIO, and publishes events to Kafka via the transactional outbox pattern. See `kotlin-service/README.md` for full documentation.
 
@@ -14,15 +14,27 @@ ModelForge is a platform for generating 3D models from images. It consists of tw
 
 ## Build & Run Commands
 
-### Full stack (from `deploy/` directory)
+### Full stack (Makefile — from project root)
+```bash
+make init              # creates deploy/.env from .env.example (first time)
+make full              # all services + logging (Loki/Grafana)
+make down              # stop containers (data preserved)
+make clean             # stop + remove volumes
+```
+
+### Selective start
+```bash
+make infra             # Kafka, PostgreSQL, MinIO, Zookeeper
+make app               # infra + ML Worker
+make backend           # infra + Kotlin API + ML Worker
+make gpu               # full stack with NVIDIA GPU for ML Worker
+make dev               # infra + logging (run services locally)
+```
+
+### Direct docker-compose (from `deploy/` directory)
 ```bash
 cp .env.example .env  # first time only
 docker-compose -f docker-compose.yml -f docker-compose.infra.yml -f docker-compose.logging.yml -f docker-compose.app.yml up -d --build
-```
-
-### Infrastructure only (Kafka, PostgreSQL, MinIO, Zookeeper)
-```bash
-docker-compose -f docker-compose.yml -f docker-compose.infra.yml up -d
 ```
 
 ### Run ML service tests
@@ -45,8 +57,17 @@ cd kotlin-service
 ./gradlew check             # all tests
 ```
 
+### Run all tests via Makefile
+```bash
+make test              # all tests (ML + Kotlin + Frontend)
+make test-ml           # pytest for ML Service
+make test-kotlin       # ./gradlew check for Kotlin Service
+make test-frontend     # npm run build for Frontend
+```
+
 ### Seed test data (requires running infrastructure)
 ```bash
+make seed              # or manually:
 python ml-service/scripts/seed_minio.py   # uploads test images to MinIO
 python ml-service/scripts/seed_tasks.py   # sends test tasks to Kafka
 ```
@@ -60,6 +81,10 @@ The system is a distributed pipeline:
 ### Kotlin Service (`kotlin-service/`)
 
 Layered Spring Boot architecture: Controllers → Services → Repositories (JdbcTemplate). Key patterns: transactional outbox for Kafka, JWT stateless auth, Liquibase migrations. Full details in `kotlin-service/README.md`.
+
+### Frontend (`frontend/`)
+
+React 18 SPA built with Vite. CSS Modules for styling, React Router for navigation, Axios with JWT interceptors for API calls. Includes a 3D model viewer (`@google/model-viewer`) for previewing generated GLB files. Key components: `AuthContext` for auth state, `ProtectedRoute` for route guards, `ModelViewer` for 3D previews. See `frontend/README.md` for full documentation.
 
 ### ML Service (`ml-service/`)
 
@@ -84,4 +109,5 @@ All application code lives in `ml-service/src/modelforge/` with these layers:
 
 - **Kotlin Service:** Kotlin 1.9.22, Spring Boot 3.2.2, JDK 17, Gradle 8.5
 - **ML Service:** Python 3.9, dependencies in `ml-service/requirements.txt`, Docker images based on `python:3.9-slim`
+- **Frontend:** React 18.3.1, Vite 5.3.1, React Router 6.23.1, Node 18+
 - Commit messages are in Russian
