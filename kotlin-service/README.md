@@ -238,7 +238,7 @@ All `/api/**` endpoints require a JWT token in the `Authorization` header:
 Authorization: Bearer <token>
 ```
 
-Public endpoints: `/auth/**`, `/health`, `/actuator/**`, `/swagger-ui/**`.
+Public endpoints: `/auth/**`, `/api/auth/**`, `/health`, `/actuator/**`, `/swagger-ui/**`, `/v3/api-docs/**`.
 
 ---
 
@@ -680,7 +680,6 @@ src/integrationTest/                   # Integration tests (H2, mocked Kafka/Min
 - **WebSocket notifications** — Push task status updates to clients in real-time instead of polling
 - **Rate limiting** — Protect endpoints from abuse with request throttling
 - **File type detection** — Validate file content (magic bytes) in addition to extension
-- **Real ML backend integration** — Replace mock inference with TripoSR or similar model
 - **Retry/DLQ for failed tasks** — Automatic retry with dead-letter queue for failed ML processing
 - **User management** — Password reset, email verification, role-based access control
 - **API versioning** — Version endpoints (`/v1/api/tasks`) for backward compatibility
