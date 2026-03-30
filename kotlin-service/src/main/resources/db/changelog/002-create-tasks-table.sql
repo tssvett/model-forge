@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     prompt TEXT,
     s3_input_key VARCHAR(512),
     s3_output_key VARCHAR(512),
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 --changeset modelforge:002-create-tasks-indexes
