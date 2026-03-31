@@ -31,7 +31,24 @@ make gpu               # full stack with NVIDIA GPU for ML Worker
 make dev               # infra + logging (run services locally)
 ```
 
+### Logs & utilities
+```bash
+make logs              # tail all service logs
+make logs-ml           # tail ML Worker logs
+make logs-kotlin       # tail Kotlin Service logs
+make logs-kafka        # tail Kafka logs
+make build             # build all Docker images (no start)
+make build-ml          # build ML Service image
+make build-kotlin      # build Kotlin Service image
+make build-frontend    # build Frontend image
+make ps                # show container status
+make help              # show all available targets
+```
+
 ### Direct docker-compose (from `deploy/` directory)
+
+The `deploy/` directory contains 7 compose files: `docker-compose.yml` (networks/volumes), `infra.yml` (Kafka, PG, MinIO, ZK), `app.yml` (ML Worker), `kotlin.yml` (Kotlin API), `frontend.yml` (React SPA), `logging.yml` (Loki/Grafana/Promtail), `gpu.yml` (NVIDIA GPU overlay).
+
 ```bash
 cp .env.example .env  # first time only
 docker-compose -f docker-compose.yml -f docker-compose.infra.yml -f docker-compose.logging.yml -f docker-compose.app.yml up -d --build
@@ -80,7 +97,7 @@ The system is a distributed pipeline:
 
 ### Kotlin Service (`kotlin-service/`)
 
-Layered Spring Boot architecture: Controllers → Services → Repositories (JdbcTemplate). Key patterns: transactional outbox for Kafka, JWT stateless auth, Liquibase migrations. Full details in `kotlin-service/README.md`.
+Layered Spring Boot architecture: Controllers → Services → Repositories (JdbcTemplate). Key patterns: transactional outbox for Kafka, JWT stateless auth, Liquibase migrations. Exposes Prometheus metrics via Micrometer (`/actuator/prometheus`). Full details in `kotlin-service/README.md`.
 
 ### Frontend (`frontend/`)
 
@@ -98,12 +115,22 @@ All application code lives in `ml-service/src/modelforge/` with these layers:
 - **storage/** — `S3StorageService` wraps boto3 for MinIO operations
 - **config/** — Pydantic `BaseSettings` for env-based configuration; JSON/text logging setup
 
+Real TripoSR inference requires GPU; see `ml-service/requirements-gpu.txt` for CUDA dependencies (PyTorch, rembg, xatlas). Use `make gpu` to run with NVIDIA GPU support.
+
 ## Key Patterns
 
 - **Factory pattern** in `ml/factory.py` — switches ML backend based on `ML_MOCK_MODE` env var
 - **Strategy pattern** — `ModelInferenceInterface` allows swapping ML implementations
 - **Constructor injection** — services are injected into `App` and `TaskProcessor`
 - Configuration is entirely env-var driven via pydantic-settings (see `deploy/.env.example` for all variables)
+
+## CI/CD
+
+GitHub Actions workflows in `.github/workflows/`:
+
+- `frontend-ci.yml` — triggers on `frontend/**` changes: npm ci → build → Docker build
+- `kotlin-service-ci.yml` — triggers on `kotlin-service/**` changes: Gradle build → integration tests → Docker build
+- `ml-service-ci.yml` — triggers on `ml-service/**` changes: pip install → pytest → Docker build
 
 ## Language & Runtime
 
