@@ -1,0 +1,41 @@
+groups:
+  - name: ml_worker_alerts
+    rules:
+      - alert: MLWorkerDown
+        expr: up{job="ml-worker"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ML Worker is down"
+          description: "ML Worker has been unreachable for more than 2 minutes."
+
+      - alert: HighErrorRate
+        expr: |
+          rate(tasks_processed_total{status="failed"}[5m])
+          / (rate(tasks_processed_total[5m]) > 0)
+          > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High task error rate (> 10%)"
+          description: "More than 10% of tasks are failing over the last 5 minutes."
+
+      - alert: HighTaskDuration
+        expr: histogram_quantile(0.95, rate(task_processing_duration_seconds_bucket[5m])) > 120
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High task processing duration (p95 > 120s)"
+          description: "95th percentile task duration exceeds 2 minutes."
+
+      - alert: PostgresDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL exporter is down"
+          description: "PostgreSQL exporter has been unreachable for more than 1 minute."
