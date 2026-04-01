@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: ${COMPOSE_PROJECT_NAME}-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    volumes:
+      - ../monitoring/prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    networks:
+      - modelforge-net
+    mem_limit: ${PROMETHEUS_MEM_LIMIT}
+    cpus: ${PROMETHEUS_CPU_LIMIT}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: ${COMPOSE_PROJECT_NAME}-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable"
+    ports:
+      - "${POSTGRES_EXPORTER_PORT}:9187"
+    networks:
+      - modelforge-net
+    mem_limit: ${POSTGRES_EXPORTER_MEM_LIMIT}
+    cpus: ${POSTGRES_EXPORTER_CPU_LIMIT}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - logging=promtail
+
+volumes:
+  prometheus_data:

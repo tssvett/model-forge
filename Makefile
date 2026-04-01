@@ -8,10 +8,11 @@
 COMPOSE = docker compose -f docker-compose.yml
 INFRA   = $(COMPOSE) -f docker-compose.infra.yml
 LOG     = $(INFRA) -f docker-compose.logging.yml
+MON     = $(LOG) -f docker-compose.monitoring.yml
 APP     = $(INFRA) -f docker-compose.app.yml
 KOTLIN  = $(INFRA) -f docker-compose.kotlin.yml
 FRONT   = $(KOTLIN) -f docker-compose.frontend.yml
-FULL    = $(LOG) -f docker-compose.app.yml -f docker-compose.kotlin.yml -f docker-compose.frontend.yml
+FULL    = $(MON) -f docker-compose.app.yml -f docker-compose.kotlin.yml -f docker-compose.frontend.yml
 GPU     = $(FULL) -f docker-compose.gpu.yml
 
 # --- Initial setup ----------------------------------------------------------
@@ -43,9 +44,13 @@ full: ## Full stack: all services + logging
 gpu: ## Full stack with GPU for ML Worker (NVIDIA)
 	cd deploy && $(GPU) up -d --build
 
+.PHONY: monitoring
+monitoring: ## Infrastructure + logging + monitoring (Prometheus, exporters)
+	cd deploy && $(MON) up -d
+
 .PHONY: dev
-dev: ## Dev mode: infrastructure + logging (services run locally)
-	cd deploy && $(LOG) up -d
+dev: ## Dev mode: infrastructure + logging + monitoring (services run locally)
+	cd deploy && $(MON) up -d
 
 # --- Stop -------------------------------------------------------------------
 

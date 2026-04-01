@@ -9,3 +9,4 @@ volumes:
   minio_data:
   loki_data:
   grafana_data:
+  prometheus_data:

@@ -1,0 +1,103 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "title": "Prometheus Targets Status",
+      "type": "table",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "targets": [{ "expr": "up", "legendFormat": "{{ job }}", "refId": "A", "format": "table", "instant": true }],
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true }, "renameByName": { "instance": "Instance", "job": "Service", "Value": "Status (1=UP)" } } }]
+    },
+    {
+      "title": "PostgreSQL — Active Connections",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 15, "lineWidth": 2 } }, "overrides": [] },
+      "targets": [
+        { "expr": "pg_stat_activity_count{datname=\"modelforge_db\"}", "legendFormat": "{{ state }}", "refId": "A" }
+      ]
+    },
+    {
+      "title": "PostgreSQL — Transactions/sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "fillOpacity": 15, "lineWidth": 2 } }, "overrides": [] },
+      "targets": [
+        { "expr": "rate(pg_stat_database_xact_commit{datname=\"modelforge_db\"}[5m])", "legendFormat": "commits/s", "refId": "A" },
+        { "expr": "rate(pg_stat_database_xact_rollback{datname=\"modelforge_db\"}[5m])", "legendFormat": "rollbacks/s", "refId": "B" }
+      ]
+    },
+    {
+      "title": "PostgreSQL — Database Size",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } }, "overrides": [] },
+      "targets": [{ "expr": "pg_database_size_bytes{datname=\"modelforge_db\"}", "legendFormat": "", "refId": "A" }]
+    },
+    {
+      "title": "PostgreSQL — Cache Hit Ratio",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 0.9 }, { "color": "green", "value": 0.95 }] } }, "overrides": [] },
+      "targets": [{
+        "expr": "pg_stat_database_blks_hit{datname=\"modelforge_db\"} / (pg_stat_database_blks_hit{datname=\"modelforge_db\"} + pg_stat_database_blks_read{datname=\"modelforge_db\"} > 0) or vector(1)",
+        "legendFormat": "",
+        "refId": "A"
+      }]
+    },
+    {
+      "title": "MinIO — HTTP Requests/sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "custom": { "fillOpacity": 15, "lineWidth": 2 } }, "overrides": [] },
+      "targets": [
+        { "expr": "rate(minio_s3_requests_total[5m])", "legendFormat": "{{ api }}", "refId": "A" }
+      ]
+    },
+    {
+      "title": "MinIO — Storage Used",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } }, "overrides": [] },
+      "targets": [{ "expr": "minio_cluster_usage_total_bytes", "legendFormat": "Total Used", "refId": "A" }]
+    },
+    {
+      "title": "MinIO — S3 Errors/sec",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "ops", "custom": { "fillOpacity": 15, "lineWidth": 2 } }, "overrides": [] },
+      "targets": [
+        { "expr": "rate(minio_s3_requests_errors_total[5m])", "legendFormat": "{{ api }}", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Prometheus — Scrape Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } }, "overrides": [] },
+      "targets": [
+        { "expr": "scrape_duration_seconds", "legendFormat": "{{ job }}", "refId": "A" }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["modelforge", "infrastructure"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "ModelForge Infrastructure",
+  "uid": "modelforge-infrastructure"
+}

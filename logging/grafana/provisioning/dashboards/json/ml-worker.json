@@ -1,0 +1,169 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "title": "Tasks Processed (rate/min)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "fillOpacity": 20, "lineWidth": 2 },
+          "unit": "ops"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "failed" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "success" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+        ]
+      },
+      "targets": [
+        {
+          "expr": "rate(tasks_processed_total{status=\"success\"}[5m]) * 60",
+          "legendFormat": "success",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(tasks_processed_total{status=\"failed\"}[5m]) * 60",
+          "legendFormat": "failed",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "title": "Task Processing Duration (p50 / p95 / p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "lineWidth": 2 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(task_processing_duration_seconds_bucket[5m]))",
+          "legendFormat": "p50",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(task_processing_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95",
+          "refId": "B"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(task_processing_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "title": "Tasks In Progress",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 3 }, { "color": "red", "value": 5 }] } },
+        "overrides": []
+      },
+      "targets": [{ "expr": "tasks_in_progress", "legendFormat": "", "refId": "A" }]
+    },
+    {
+      "title": "Total Tasks Processed",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } }, "overrides": [] },
+      "targets": [{ "expr": "sum(tasks_processed_total)", "legendFormat": "", "refId": "A" }]
+    },
+    {
+      "title": "Error Rate (%)",
+      "type": "gauge",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0, "max": 1,
+          "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.05 }, { "color": "red", "value": 0.1 }] }
+        },
+        "overrides": []
+      },
+      "targets": [{
+        "expr": "rate(tasks_processed_total{status=\"failed\"}[5m]) / (rate(tasks_processed_total[5m]) > 0) or vector(0)",
+        "legendFormat": "",
+        "refId": "A"
+      }]
+    },
+    {
+      "title": "Worker Uptime",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }] } }, "overrides": [] },
+      "targets": [{ "expr": "process_uptime_seconds{job=\"ml-worker\"}", "legendFormat": "", "refId": "A" }]
+    },
+    {
+      "title": "ML Inference Duration (p50 / p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } }, "overrides": [] },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, rate(ml_inference_duration_seconds_bucket[5m]))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, rate(ml_inference_duration_seconds_bucket[5m]))", "legendFormat": "p95", "refId": "B" }
+      ]
+    },
+    {
+      "title": "S3 Operation Duration",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "lineWidth": 2 } }, "overrides": [] },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, rate(s3_operation_duration_seconds_bucket{operation=\"download\"}[5m]))", "legendFormat": "download p95", "refId": "A" },
+        { "expr": "histogram_quantile(0.95, rate(s3_operation_duration_seconds_bucket{operation=\"upload\"}[5m]))", "legendFormat": "upload p95", "refId": "B" }
+      ]
+    },
+    {
+      "title": "Worker Memory Usage (RSS)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "fillOpacity": 15, "lineWidth": 2 } }, "overrides": [] },
+      "targets": [
+        { "expr": "process_resident_memory_bytes{job=\"ml-worker\"}", "legendFormat": "RSS", "refId": "A" },
+        { "expr": "process_virtual_memory_bytes{job=\"ml-worker\"}", "legendFormat": "VMS", "refId": "B" }
+      ]
+    },
+    {
+      "title": "Worker CPU Usage",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "custom": { "fillOpacity": 15, "lineWidth": 2 } }, "overrides": [] },
+      "targets": [
+        { "expr": "rate(process_cpu_seconds_total{job=\"ml-worker\"}[5m])", "legendFormat": "CPU", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Errors by Type",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "datasource": { "type": "prometheus", "uid": "" },
+      "targets": [{ "expr": "tasks_errors_total", "legendFormat": "{{ error_type }}", "refId": "A", "format": "table", "instant": true }],
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true, "__name__": true, "instance": true, "job": true }, "renameByName": { "error_type": "Error Type", "Value": "Count" } } }]
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 39,
+  "tags": ["modelforge", "ml-worker"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "ModelForge ML Worker",
+  "uid": "modelforge-ml-worker"
+}

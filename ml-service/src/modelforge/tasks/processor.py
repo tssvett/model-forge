@@ -1,5 +1,5 @@
 import io
-import json
+import time
 from typing import Dict, Any
 
 from PIL import Image
@@ -7,6 +7,14 @@ from PIL import Image
 from ..config import Settings
 from ..config.logging import get_logger
 from ..database.repository import TaskRepository
+from ..metrics.collector import (
+    TASKS_PROCESSED,
+    TASKS_ERRORS,
+    TASK_DURATION,
+    TASKS_IN_PROGRESS,
+    ML_INFERENCE_DURATION,
+    S3_OPERATION_DURATION,
+)
 from ..ml.factory import create_inference_service
 from ..ml.inference_interface import ModelInferenceInterface
 from ..storage.s3_client import S3StorageService
@@ -88,6 +96,9 @@ class TaskProcessor:
 
         logger.info("Starting task %s for %s", task_id, input_s3_path)
 
+        TASKS_IN_PROGRESS.inc()
+        start_time = time.monotonic()
+
         try:
             # 0. Hot-reload ML service if settings changed in DB
             self._maybe_reload_service()
@@ -97,12 +108,16 @@ class TaskProcessor:
 
             # 2. Download input image from S3
             logger.info("Downloading image from %s", input_s3_path)
+            s3_start = time.monotonic()
             image_bytes = self.storage.download_file(input_s3_path)
+            S3_OPERATION_DURATION.labels(operation="download").observe(time.monotonic() - s3_start)
             image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
             # 3. Run inference (mock or real — transparent via interface)
             logger.info("Running ML inference...")
+            infer_start = time.monotonic()
             result = self.ml_service.infer(image, params)
+            ML_INFERENCE_DURATION.observe(time.monotonic() - infer_start)
 
             if not result.success:
                 raise RuntimeError(f"ML inference failed: {result.error}")
@@ -111,11 +126,15 @@ class TaskProcessor:
             mesh_key = f"results/{task_id}/model.{output_format}"
             texture_key = f"results/{task_id}/texture.png"
 
+            s3_start = time.monotonic()
             mesh_url = self.storage.upload_bytes(mesh_key, result.mesh_bytes)
+            S3_OPERATION_DURATION.labels(operation="upload").observe(time.monotonic() - s3_start)
 
             texture_url = None
             if result.texture_bytes:
+                s3_start = time.monotonic()
                 texture_url = self.storage.upload_bytes(texture_key, result.texture_bytes)
+                S3_OPERATION_DURATION.labels(operation="upload").observe(time.monotonic() - s3_start)
 
             # 5. Build result metadata
             db_result = {
@@ -128,10 +147,17 @@ class TaskProcessor:
             # 6. Mark task completed (s3_output_key = mesh S3 key)
             self.repository.update_status(task_id, "COMPLETED", mesh_key)
 
+            TASKS_PROCESSED.labels(status="success").inc()
             logger.info("Task %s completed. Model: %s", task_id, mesh_url)
             return True
 
         except Exception as e:
             logger.error("Error processing task %s: %s", task_id, e, exc_info=True)
+            TASKS_PROCESSED.labels(status="failed").inc()
+            TASKS_ERRORS.labels(error_type=type(e).__name__).inc()
             self.repository.update_status(task_id, "FAILED")
             return False
+
+        finally:
+            TASKS_IN_PROGRESS.dec()
+            TASK_DURATION.observe(time.monotonic() - start_time)

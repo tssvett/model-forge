@@ -34,6 +34,8 @@ services:
       OMP_NUM_THREADS: ${OMP_NUM_THREADS}
       MKL_NUM_THREADS: ${MKL_NUM_THREADS}
       TORCH_NUM_THREADS: ${TORCH_NUM_THREADS}
+    ports:
+      - "${ML_WORKER_METRICS_PORT}:8000"
     networks:
       - modelforge-net
     mem_limit: ${ML_WORKER_MEM_LIMIT}

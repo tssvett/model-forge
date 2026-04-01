@@ -17,7 +17,7 @@ ModelForge is a platform for generating 3D models from images. It consists of th
 ### Full stack (Makefile — from project root)
 ```bash
 make init              # creates deploy/.env from .env.example (first time)
-make full              # all services + logging (Loki/Grafana)
+make full              # all services + logging + monitoring
 make down              # stop containers (data preserved)
 make clean             # stop + remove volumes
 ```
@@ -28,7 +28,8 @@ make infra             # Kafka, PostgreSQL, MinIO, Zookeeper
 make app               # infra + ML Worker
 make backend           # infra + Kotlin API + ML Worker
 make gpu               # full stack with NVIDIA GPU for ML Worker
-make dev               # infra + logging (run services locally)
+make monitoring        # infra + logging + monitoring (Prometheus)
+make dev               # infra + logging + monitoring (run services locally)
 ```
 
 ### Logs & utilities
@@ -47,7 +48,7 @@ make help              # show all available targets
 
 ### Direct docker-compose (from `deploy/` directory)
 
-The `deploy/` directory contains 7 compose files: `docker-compose.yml` (networks/volumes), `infra.yml` (Kafka, PG, MinIO, ZK), `app.yml` (ML Worker), `kotlin.yml` (Kotlin API), `frontend.yml` (React SPA), `logging.yml` (Loki/Grafana/Promtail), `gpu.yml` (NVIDIA GPU overlay).
+The `deploy/` directory contains 8 compose files: `docker-compose.yml` (networks/volumes), `infra.yml` (Kafka, PG, MinIO, ZK), `app.yml` (ML Worker), `kotlin.yml` (Kotlin API), `frontend.yml` (React SPA), `logging.yml` (Loki/Grafana/Promtail), `monitoring.yml` (Prometheus/postgres-exporter), `gpu.yml` (NVIDIA GPU overlay).
 
 ```bash
 cp .env.example .env  # first time only
@@ -93,7 +94,7 @@ python ml-service/scripts/seed_tasks.py   # sends test tasks to Kafka
 
 The system is a distributed pipeline:
 
-**Client** → **Kotlin Service** (REST API + auth) → **Kafka** (task queue) → **ML Worker** (processing) → **MinIO** (artifact storage), with **PostgreSQL** for task state tracking and **Loki/Grafana/Promtail** for observability.
+**Client** → **Kotlin Service** (REST API + auth) → **Kafka** (task queue) → **ML Worker** (processing) → **MinIO** (artifact storage), with **PostgreSQL** for task state tracking, **Loki/Grafana/Promtail** for logging, and **Prometheus/Grafana** for metrics monitoring.
 
 ### Kotlin Service (`kotlin-service/`)
 
@@ -114,6 +115,7 @@ All application code lives in `ml-service/src/modelforge/` with these layers:
 - **database/** — `TaskRepository` for PostgreSQL task state (PENDING → COMPLETED/FAILED)
 - **storage/** — `S3StorageService` wraps boto3 for MinIO operations
 - **config/** — Pydantic `BaseSettings` for env-based configuration; JSON/text logging setup
+- **metrics/** — Prometheus metrics (`prometheus-client`): task counters, duration histograms, S3/inference timing. Exposes `/metrics` on port 8000
 
 Real TripoSR inference requires GPU; see `ml-service/requirements-gpu.txt` for CUDA dependencies (PyTorch, rembg, xatlas). Use `make gpu` to run with NVIDIA GPU support.
 
