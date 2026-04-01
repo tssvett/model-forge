@@ -6,12 +6,15 @@
 
 # PyTorch (CUDA 11.8) — adjust for your CUDA version
 --extra-index-url https://download.pytorch.org/whl/cu118
-torch==2.1.0+cu118
+torch==2.1.2+cu118
+
+# TripoSR model (provides tsr.system.TSR and tsr.utils)
+git+https://github.com/VAST-AI-Research/TripoSR.git
 
 # TripoSR model dependencies
 omegaconf==2.3.0
 einops==0.7.0
-transformers==4.35.0
+transformers==4.36.0
 huggingface-hub
 imageio[ffmpeg]
 
