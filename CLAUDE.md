@@ -28,6 +28,7 @@ make infra             # Kafka, PostgreSQL, MinIO, Zookeeper
 make app               # infra + ML Worker
 make backend           # infra + Kotlin API + ML Worker
 make gpu               # full stack with NVIDIA GPU for ML Worker
+make cpu-inference     # full stack with real TripoSR on CPU (no GPU needed)
 make monitoring        # infra + logging + monitoring (Prometheus)
 make dev               # infra + logging + monitoring (run services locally)
 ```
@@ -48,7 +49,7 @@ make help              # show all available targets
 
 ### Direct docker-compose (from `deploy/` directory)
 
-The `deploy/` directory contains 8 compose files: `docker-compose.yml` (networks/volumes), `infra.yml` (Kafka, PG, MinIO, ZK), `app.yml` (ML Worker), `kotlin.yml` (Kotlin API), `frontend.yml` (React SPA), `logging.yml` (Loki/Grafana/Promtail), `monitoring.yml` (Prometheus/postgres-exporter), `gpu.yml` (NVIDIA GPU overlay).
+The `deploy/` directory contains 9 compose files: `docker-compose.yml` (networks/volumes), `infra.yml` (Kafka, PG, MinIO, ZK), `app.yml` (ML Worker), `kotlin.yml` (Kotlin API), `frontend.yml` (React SPA), `logging.yml` (Loki/Grafana/Promtail), `monitoring.yml` (Prometheus/postgres-exporter), `gpu.yml` (NVIDIA GPU overlay), `cpu-inference.yml` (CPU inference overlay).
 
 ```bash
 cp .env.example .env  # first time only
@@ -117,7 +118,7 @@ All application code lives in `ml-service/src/modelforge/` with these layers:
 - **config/** — Pydantic `BaseSettings` for env-based configuration; JSON/text logging setup
 - **metrics/** — Prometheus metrics (`prometheus-client`): task counters, duration histograms, S3/inference timing. Exposes `/metrics` on port 8000
 
-Real TripoSR inference requires GPU; see `ml-service/requirements-gpu.txt` for CUDA dependencies (PyTorch, rembg, xatlas). Use `make gpu` to run with NVIDIA GPU support.
+TripoSR inference can run on GPU or CPU. Three Dockerfiles exist: `Dockerfile` (mock only, no torch), `Dockerfile.gpu` (CUDA 11.8 + torch GPU), `Dockerfile.cpu` (torch CPU). Use `make gpu` for GPU or `make cpu-inference` for CPU inference. HuggingFace model is cached in a persistent volume.
 
 ## Key Patterns
 
@@ -137,6 +138,6 @@ GitHub Actions workflows in `.github/workflows/`:
 ## Language & Runtime
 
 - **Kotlin Service:** Kotlin 1.9.22, Spring Boot 3.2.2, JDK 17, Gradle 8.5
-- **ML Service:** Python 3.9, dependencies in `ml-service/requirements.txt`, Docker images based on `python:3.9-slim`
+- **ML Service:** Python 3.9, dependencies in `ml-service/requirements.txt` (base), `requirements-cpu.txt` (CPU inference), `requirements-gpu.txt` (GPU inference). Docker images: `python:3.9-slim` (mock), `nvidia/cuda:11.8.0-runtime` (GPU)
 - **Frontend:** React 18.3.1, Vite 5.3.1, React Router 6.23.1, Node 18+
 - Commit messages are in Russian
