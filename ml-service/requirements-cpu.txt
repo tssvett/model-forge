@@ -1,0 +1,25 @@
+# TripoSR CPU dependencies (no NVIDIA GPU required)
+# Install on top of base requirements: pip install -r requirements-cpu.txt
+
+# Base dependencies
+-r requirements.txt
+
+# PyTorch (CPU only)
+torch==2.1.2 --index-url https://download.pytorch.org/whl/cpu
+
+# TripoSR model (provides tsr.system.TSR and tsr.utils)
+git+https://github.com/VAST-AI-Research/TripoSR.git
+
+# TripoSR model dependencies
+omegaconf==2.3.0
+einops==0.7.0
+transformers==4.36.0
+huggingface-hub
+imageio[ffmpeg]
+
+# Background removal
+rembg
+
+# Texture baking (optional)
+xatlas==0.0.9
+moderngl==5.10.0

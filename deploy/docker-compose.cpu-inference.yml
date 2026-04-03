@@ -1,0 +1,25 @@
+version: '3.8'
+
+# CPU inference overlay — runs TripoSR on CPU (no NVIDIA GPU required).
+# Slower than GPU but works on any machine.
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.infra.yml \
+#     -f docker-compose.app.yml -f docker-compose.cpu-inference.yml up -d --build
+
+services:
+  ml-worker:
+    build:
+      context: ../ml-service
+      dockerfile: Dockerfile.cpu
+    environment:
+      ML_MOCK_MODE: "false"
+      TRIPSR_DEVICE: "cpu"
+      TORCH_NUM_THREADS: 4
+    volumes:
+      - huggingface-cache:/app/.cache/huggingface
+    mem_limit: 8g
+    shm_size: '2g'
+
+volumes:
+  huggingface-cache:

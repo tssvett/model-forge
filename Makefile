@@ -14,6 +14,7 @@ KOTLIN  = $(INFRA) -f docker-compose.kotlin.yml
 FRONT   = $(KOTLIN) -f docker-compose.frontend.yml
 FULL    = $(MON) -f docker-compose.app.yml -f docker-compose.kotlin.yml -f docker-compose.frontend.yml
 GPU     = $(FULL) -f docker-compose.gpu.yml
+CPU_INF = $(FULL) -f docker-compose.cpu-inference.yml
 
 # --- Initial setup ----------------------------------------------------------
 
@@ -43,6 +44,10 @@ full: ## Full stack: all services + logging
 .PHONY: gpu
 gpu: ## Full stack with GPU for ML Worker (NVIDIA)
 	cd deploy && $(GPU) up -d --build
+
+.PHONY: cpu-inference
+cpu-inference: ## Full stack with real TripoSR on CPU (no GPU needed)
+	cd deploy && $(CPU_INF) up -d --build
 
 .PHONY: monitoring
 monitoring: ## Infrastructure + logging + monitoring (Prometheus, exporters)
