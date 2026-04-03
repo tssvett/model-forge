@@ -206,17 +206,32 @@ Generates a simple 3D cube. Suitable for testing infrastructure without GPU.
 
 ### TripoSR Mode (`ML_MOCK_MODE=false`)
 
-Real 3D model generation from images. Requires GPU and additional dependencies:
+Real 3D model generation from images. Works on both GPU and CPU.
 
+**GPU (faster):**
 ```bash
-pip install -r requirements-gpu.txt
+pip install -r requirements-gpu.txt   # PyTorch CUDA 11.8
+make gpu                               # via Docker
 ```
 
-**GPU dependencies** (`requirements-gpu.txt`):
-- PyTorch (CUDA 11.8)
+**CPU (no GPU needed, slower):**
+```bash
+pip install -r requirements-cpu.txt   # PyTorch CPU
+make cpu-inference                     # via Docker
+```
+
+**Shared dependencies** (included in both requirement files):
+- TripoSR (`tsr` package from GitHub)
 - omegaconf, einops, transformers, huggingface-hub
 - rembg (background removal)
 - xatlas, moderngl (texture baking)
+
+**Docker images:**
+- `Dockerfile` — base (mock only, no torch)
+- `Dockerfile.cpu` — CPU inference (`python:3.9-slim` + torch CPU)
+- `Dockerfile.gpu` — GPU inference (`nvidia/cuda:11.8.0-runtime`)
+
+HuggingFace model is cached in a Docker volume (`huggingface-cache`) to avoid re-downloading on restart.
 
 ### Adding a New ML Backend
 
