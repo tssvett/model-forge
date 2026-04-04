@@ -45,6 +45,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Build Docker image (mock)
         working-directory: ml-service
-        run: docker build -t modelforge-ml-service:test .
+        run: docker build --build-arg MODE=mock -t modelforge-ml-service:mock .
+
+      - name: Build Docker image (cpu)
+        working-directory: ml-service
+        run: docker build --build-arg MODE=cpu -t modelforge-ml-service:cpu .
+
+      - name: Build Docker image (gpu)
+        working-directory: ml-service
+        run: docker build --build-arg MODE=gpu -t modelforge-ml-service:gpu .

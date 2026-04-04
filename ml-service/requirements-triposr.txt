@@ -1,0 +1,16 @@
+# TripoSR model and its dependencies (pinned to commit for stable Docker layer cache)
+git+https://github.com/VAST-AI-Research/TripoSR.git@d26e33181947bbbc4c6fc0f5734e1ec6c080956e
+
+# TripoSR model dependencies
+omegaconf==2.3.0
+einops==0.7.0
+transformers==4.36.0
+huggingface-hub==0.20.3
+imageio[ffmpeg]
+
+# Background removal
+rembg==2.0.50
+
+# Texture baking
+xatlas==0.0.9
+moderngl==5.10.0

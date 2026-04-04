@@ -11,7 +11,8 @@ services:
   ml-worker:
     build:
       context: ../ml-service
-      dockerfile: Dockerfile.cpu
+      args:
+        MODE: cpu
     environment:
       ML_MOCK_MODE: "false"
       TRIPSR_DEVICE: "cpu"

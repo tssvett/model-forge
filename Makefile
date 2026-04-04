@@ -15,6 +15,7 @@ FRONT   = $(KOTLIN) -f docker-compose.frontend.yml
 FULL    = $(MON) -f docker-compose.app.yml -f docker-compose.kotlin.yml -f docker-compose.frontend.yml
 GPU     = $(FULL) -f docker-compose.gpu.yml
 CPU_INF = $(FULL) -f docker-compose.cpu-inference.yml
+ALL     = $(FULL) -f docker-compose.gpu.yml -f docker-compose.cpu-inference.yml
 
 # --- Initial setup ----------------------------------------------------------
 
@@ -61,11 +62,11 @@ dev: ## Dev mode: infrastructure + logging + monitoring (services run locally)
 
 .PHONY: down
 down: ## Stop all containers (data preserved)
-	cd deploy && $(FULL) down 2>/dev/null; true
+	cd deploy && $(ALL) down 2>/dev/null; true
 
 .PHONY: clean
 clean: ## Stop everything and delete volumes (data lost!)
-	cd deploy && $(FULL) down -v 2>/dev/null; true
+	cd deploy && $(ALL) down -v 2>/dev/null; true
 
 # --- Logs -------------------------------------------------------------------
 
@@ -115,8 +116,19 @@ build: ## Build all Docker images without starting
 	cd deploy && $(FULL) build
 
 .PHONY: build-ml
-build-ml: ## Build ML Service Docker image
-	cd ml-service && docker build -t modelforge-ml-service:latest .
+build-ml: build-ml-mock ## Build ML Service Docker image (mock by default)
+
+.PHONY: build-ml-mock
+build-ml-mock: ## Build ML Service — mock mode (no torch)
+	cd ml-service && docker build --build-arg MODE=mock -t modelforge-ml-service:mock .
+
+.PHONY: build-ml-cpu
+build-ml-cpu: ## Build ML Service — CPU inference (torch CPU + TripoSR)
+	cd ml-service && docker build --build-arg MODE=cpu -t modelforge-ml-service:cpu .
+
+.PHONY: build-ml-gpu
+build-ml-gpu: ## Build ML Service — GPU inference (torch CUDA + TripoSR)
+	cd ml-service && docker build --build-arg MODE=gpu -t modelforge-ml-service:gpu .
 
 .PHONY: build-kotlin
 build-kotlin: ## Build Kotlin Service Docker image
@@ -130,7 +142,7 @@ build-frontend: ## Build Frontend Docker image
 
 .PHONY: ps
 ps: ## Show container status
-	cd deploy && $(FULL) ps 2>/dev/null; true
+	cd deploy && $(ALL) ps 2>/dev/null; true
 
 .PHONY: help
 help: ## Show this help
