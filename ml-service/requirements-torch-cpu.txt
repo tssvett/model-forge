@@ -1,0 +1,2 @@
+# PyTorch CPU-only (no CUDA, ~800MB wheel — cached by Docker BuildKit)
+torch==2.1.2 --index-url https://download.pytorch.org/whl/cpu
