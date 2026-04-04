@@ -19,7 +19,6 @@ FROM base-${MODE} AS builder
 ARG MODE
 ENV DEBIAN_FRONTEND=noninteractive
 
-# System deps: g++ and git needed only for cpu/gpu (native extensions, TripoSR from git)
 # GPU mode: nvidia/cuda base has no python — add deadsnakes PPA for python3.9
 SHELL ["/bin/bash", "-c"]
 RUN if [ "$MODE" = "gpu" ]; then \
@@ -38,17 +37,20 @@ RUN if [ "$MODE" = "gpu" ]; then \
 
 WORKDIR /app
 
+# Install all pip packages to /install prefix — predictable path regardless of base image.
+# This avoids the site-packages vs dist-packages divergence between python:3.9-slim and nvidia/cuda.
+
 # Layer 1: Base Python deps (~50MB, changes occasionally)
 COPY requirements.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install -r requirements.txt
+    pip install --prefix=/install -r requirements.txt
 
 # Layer 2: Torch (~800MB CPU / ~2GB GPU, changes VERY rarely)
 # Separate layer = cached forever until torch version bumps
 COPY requirements-torch-cpu.txt requirements-torch-gpu.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip \
-    if [ "$MODE" = "cpu" ]; then pip install -r requirements-torch-cpu.txt; \
-    elif [ "$MODE" = "gpu" ]; then pip install -r requirements-torch-gpu.txt; fi
+    if [ "$MODE" = "cpu" ]; then pip install --prefix=/install -r requirements-torch-cpu.txt; \
+    elif [ "$MODE" = "gpu" ]; then pip install --prefix=/install -r requirements-torch-gpu.txt; fi
 
 # Layer 3: TripoSR + ML deps (changes rarely)
 # TripoSR has no setup.py/pyproject.toml — clone via git, add to PYTHONPATH.
@@ -58,7 +60,7 @@ COPY requirements-triposr.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip \
     mkdir -p /opt/triposr \
     && if [ "$MODE" != "mock" ]; then \
-         pip install -r requirements-triposr.txt \
+         pip install --prefix=/install -r requirements-triposr.txt \
          && git clone --depth 1 https://github.com/VAST-AI-Research/TripoSR.git /opt/triposr; \
        fi
 
@@ -83,17 +85,10 @@ RUN if [ "$MODE" = "gpu" ]; then \
 
 WORKDIR /app
 
-# Copy installed packages from builder
-# python:3.9-slim uses /usr/local/lib/python3.9/site-packages
-# nvidia/cuda + apt python3.9 uses /usr/local/lib/python3.9/dist-packages
-COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-# Copy TripoSR source (empty dir in mock, full clone in cpu/gpu)
+# Copy all pip packages from builder's /install prefix into the runtime Python path.
+# --prefix=/install puts libs in /install/lib/python3.9/site-packages for ALL base images.
+COPY --from=builder /install /usr/local
 COPY --from=builder /opt/triposr /opt/triposr
-RUN if [ "$MODE" = "gpu" ]; then \
-      cp -rn /usr/local/lib/python3.9/site-packages/* /usr/local/lib/python3.9/dist-packages/ 2>/dev/null || true \
-      && cp -rn /usr/local/lib/python3.9/site-packages/* /usr/lib/python3/dist-packages/ 2>/dev/null || true; \
-    fi
 
 # App code — LAST layer, changes most often
 COPY src/ ./src/
