@@ -1,5 +1,7 @@
-# TripoSR model and its dependencies (pinned to commit for stable Docker layer cache)
-git+https://github.com/VAST-AI-Research/TripoSR.git@d26e33181947bbbc4c6fc0f5734e1ec6c080956e
+# TripoSR model and its dependencies
+# Note: not pinned to commit because repo lacks setup.py at HEAD;
+# pip installs from default branch which has the installable structure
+git+https://github.com/VAST-AI-Research/TripoSR.git
 
 # TripoSR model dependencies
 omegaconf==2.3.0
