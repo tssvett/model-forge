@@ -20,9 +20,13 @@ ARG MODE
 ENV DEBIAN_FRONTEND=noninteractive
 
 # System deps: g++ and git needed only for cpu/gpu (native extensions, TripoSR from git)
-# python3.9-dev needed only for gpu (nvidia/cuda base has no python)
+# GPU mode: nvidia/cuda base has no python — add deadsnakes PPA for python3.9
 SHELL ["/bin/bash", "-c"]
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN if [ "$MODE" = "gpu" ]; then \
+      apt-get update && apt-get install -y --no-install-recommends software-properties-common \
+      && add-apt-repository -y ppa:deadsnakes/ppa; \
+    fi \
+    && apt-get update && apt-get install -y --no-install-recommends \
     gcc libpq-dev \
     $(if [ "$MODE" != "mock" ]; then echo "g++ git"; fi) \
     $(if [ "$MODE" = "gpu" ]; then echo "python3.9 python3.9-venv python3.9-dev python3-pip"; fi) \
@@ -65,7 +69,11 @@ ARG MODE
 ENV DEBIAN_FRONTEND=noninteractive
 
 SHELL ["/bin/bash", "-c"]
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN if [ "$MODE" = "gpu" ]; then \
+      apt-get update && apt-get install -y --no-install-recommends software-properties-common \
+      && add-apt-repository -y ppa:deadsnakes/ppa; \
+    fi \
+    && apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     $(if [ "$MODE" = "gpu" ]; then echo "python3.9 python3-pip"; fi) \
     && rm -rf /var/lib/apt/lists/* \
