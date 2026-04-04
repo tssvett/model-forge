@@ -28,8 +28,15 @@ ENV/
 
 # Docker
 Dockerfile
+Dockerfile.*
 docker-compose.yml
 .dockerignore
+
+# Docs
+*.md
+
+# Tests (source excluded from image, run separately)
+tests/
 
 # Tests
 .pytest_cache/
@@ -40,3 +47,14 @@ htmlcov/
 .env
 .env.local
 *.secret
+
+# Model artifacts / caches (prevent huge build context)
+model_cache/
+*.cache/
+.claude/
+logs/
+
+# Archives
+*.tar
+*.gz
+*.zip

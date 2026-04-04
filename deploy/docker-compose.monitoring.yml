@@ -15,8 +15,8 @@ services:
       - prometheus_data:/prometheus
     networks:
       - modelforge-net
-    mem_limit: ${PROMETHEUS_MEM_LIMIT}
-    cpus: ${PROMETHEUS_CPU_LIMIT}
+    mem_limit: ${PROMETHEUS_MEM_LIMIT:-256m}
+    cpus: ${PROMETHEUS_CPU_LIMIT:-0.5}
     restart: unless-stopped
     logging:
       driver: json-file
@@ -35,8 +35,8 @@ services:
       - "${POSTGRES_EXPORTER_PORT}:9187"
     networks:
       - modelforge-net
-    mem_limit: ${POSTGRES_EXPORTER_MEM_LIMIT}
-    cpus: ${POSTGRES_EXPORTER_CPU_LIMIT}
+    mem_limit: ${POSTGRES_EXPORTER_MEM_LIMIT:-128m}
+    cpus: ${POSTGRES_EXPORTER_CPU_LIMIT:-0.2}
     restart: unless-stopped
     depends_on:
       postgres:

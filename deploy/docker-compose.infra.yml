@@ -12,8 +12,8 @@ services:
       - "${ZOOKEEPER_PORT}:${ZOOKEEPER_PORT}"
     networks:
       - modelforge-net
-    mem_limit: ${ZOOKEEPER_MEM_LIMIT}
-    cpus: ${ZOOKEEPER_CPU_LIMIT}
+    mem_limit: ${ZOOKEEPER_MEM_LIMIT:-512m}
+    cpus: ${ZOOKEEPER_CPU_LIMIT:-0.5}
     healthcheck:
       test: echo stat | nc localhost ${ZOOKEEPER_CLIENT_PORT}
       interval: 10s
@@ -51,8 +51,8 @@ services:
       KAFKA_MESSAGE_MAX_BYTES: ${KAFKA_MESSAGE_MAX_BYTES}
     networks:
       - modelforge-net
-    mem_limit: ${KAFKA_MEM_LIMIT}
-    cpus: ${KAFKA_CPU_LIMIT}
+    mem_limit: ${KAFKA_MEM_LIMIT:-768m}
+    cpus: ${KAFKA_CPU_LIMIT:-1.0}
     healthcheck:
       test: kafka-broker-api-versions --bootstrap-server localhost:${KAFKA_PORT_1}
       interval: 30s
@@ -89,8 +89,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - modelforge-net
-    mem_limit: ${POSTGRES_MEM_LIMIT}
-    cpus: ${POSTGRES_CPU_LIMIT}
+    mem_limit: ${POSTGRES_MEM_LIMIT:-512m}
+    cpus: ${POSTGRES_CPU_LIMIT:-0.5}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -106,7 +106,7 @@ services:
       - logging=promtail
 
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2024-01-18T22-51-28Z
     container_name: ${COMPOSE_PROJECT_NAME}-storage
     command: server /data --console-address ":${MINIO_CONSOLE_PORT}"
     environment:
@@ -120,8 +120,8 @@ services:
       - minio_data:/data
     networks:
       - modelforge-net
-    mem_limit: ${MINIO_MEM_LIMIT}
-    cpus: ${MINIO_CPU_LIMIT}
+    mem_limit: ${MINIO_MEM_LIMIT:-512m}
+    cpus: ${MINIO_CPU_LIMIT:-0.5}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${MINIO_PORT}/minio/health/live"]
       interval: 30s

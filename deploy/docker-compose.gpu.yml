@@ -11,7 +11,8 @@ services:
   ml-worker:
     build:
       context: ../ml-service
-      dockerfile: Dockerfile.gpu
+      args:
+        MODE: gpu
     deploy:
       resources:
         reservations:

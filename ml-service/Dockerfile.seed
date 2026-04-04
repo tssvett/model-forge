@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1
+#
+# Lightweight image for seeding MinIO with test data.
+# Only needs boto3 + pillow — no torch, no ML deps.
+
+FROM python:3.9-slim
+
+WORKDIR /app
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install boto3 pillow
+
+COPY scripts/ ./scripts/
+
+ENV PYTHONUNBUFFERED=1
+
+CMD ["python", "scripts/seed_minio.py"]

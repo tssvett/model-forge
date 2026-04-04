@@ -11,8 +11,8 @@ services:
       - loki_data:/loki
     networks:
       - modelforge-net
-    mem_limit: ${LOKI_MEM_LIMIT}
-    cpus: ${LOKI_CPU_LIMIT}
+    mem_limit: ${LOKI_MEM_LIMIT:-256m}
+    cpus: ${LOKI_CPU_LIMIT:-0.3}
     restart: unless-stopped
     logging:
       driver: json-file
@@ -32,8 +32,8 @@ services:
       - ../logging/promtail-config.yml:/etc/promtail/config.yml:ro
     networks:
       - modelforge-net
-    mem_limit: ${PROMTAIL_MEM_LIMIT}
-    cpus: ${PROMTAIL_CPU_LIMIT}
+    mem_limit: ${PROMTAIL_MEM_LIMIT:-128m}
+    cpus: ${PROMTAIL_CPU_LIMIT:-0.2}
     restart: unless-stopped
     depends_on:
       - loki
@@ -46,7 +46,7 @@ services:
       - logging=promtail
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.2.3
     container_name: ${COMPOSE_PROJECT_NAME}-grafana
     ports:
       - "${GRAFANA_PORT}:${GRAFANA_PORT}"
@@ -59,8 +59,8 @@ services:
       - ../logging/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - modelforge-net
-    mem_limit: ${GRAFANA_MEM_LIMIT}
-    cpus: ${GRAFANA_CPU_LIMIT}
+    mem_limit: ${GRAFANA_MEM_LIMIT:-256m}
+    cpus: ${GRAFANA_CPU_LIMIT:-0.3}
     restart: unless-stopped
     depends_on:
       - loki

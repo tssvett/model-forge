@@ -2,7 +2,10 @@ version: '3.8'
 
 services:
   ml-worker:
-    build: ../ml-service
+    build:
+      context: ../ml-service
+      args:
+        MODE: mock
     container_name: ${COMPOSE_PROJECT_NAME}-ml-worker-1
     depends_on:
       kafka:
@@ -34,12 +37,19 @@ services:
       OMP_NUM_THREADS: ${OMP_NUM_THREADS}
       MKL_NUM_THREADS: ${MKL_NUM_THREADS}
       TORCH_NUM_THREADS: ${TORCH_NUM_THREADS}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/metrics\")'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     ports:
       - "${ML_WORKER_METRICS_PORT}:8000"
     networks:
       - modelforge-net
-    mem_limit: ${ML_WORKER_MEM_LIMIT}
-    cpus: ${ML_WORKER_CPU_LIMIT}
+    mem_limit: ${ML_WORKER_MEM_LIMIT:-1g}
+    cpus: ${ML_WORKER_CPU_LIMIT:-1.0}
+    shm_size: '256m'
     restart: always
     logging:
       driver: json-file
@@ -50,7 +60,9 @@ services:
       - logging=promtail
 
   minio-seed:
-    build: ../ml-service
+    build:
+      context: ../ml-service
+      dockerfile: Dockerfile.seed
     container_name: ${COMPOSE_PROJECT_NAME}-minio-seed
     depends_on:
       minio:
@@ -67,8 +79,8 @@ services:
       ENVIRONMENT: ${ENVIRONMENT}
     networks:
       - modelforge-net
-    mem_limit: ${MINIO_SEED_MEM_LIMIT}
-    cpus: ${MINIO_SEED_CPU_LIMIT}
+    mem_limit: ${MINIO_SEED_MEM_LIMIT:-256m}
+    cpus: ${MINIO_SEED_CPU_LIMIT:-0.5}
     restart: "no"
     logging:
       driver: json-file
