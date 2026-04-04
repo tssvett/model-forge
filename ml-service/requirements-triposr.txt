@@ -1,7 +1,5 @@
-# TripoSR model and its dependencies (pinned to commit for stable Docker layer cache)
-git+https://github.com/VAST-AI-Research/TripoSR.git@d26e33181947bbbc4c6fc0f5734e1ec6c080956e
-
-# TripoSR model dependencies
+# TripoSR dependencies (TripoSR itself is cloned via git in Dockerfile)
+# The repo has no setup.py/pyproject.toml, so it cannot be pip-installed.
 omegaconf==2.3.0
 einops==0.7.0
 transformers==4.36.0
