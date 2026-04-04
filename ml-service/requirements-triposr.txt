@@ -1,9 +1,5 @@
-# TripoSR model and its dependencies
-# Note: not pinned to commit because repo lacks setup.py at HEAD;
-# pip installs from default branch which has the installable structure
-git+https://github.com/VAST-AI-Research/TripoSR.git
-
-# TripoSR model dependencies
+# TripoSR dependencies (TripoSR itself is cloned via git in Dockerfile)
+# The repo has no setup.py/pyproject.toml, so it cannot be pip-installed.
 omegaconf==2.3.0
 einops==0.7.0
 transformers==4.36.0

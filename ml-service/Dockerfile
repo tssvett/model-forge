@@ -46,10 +46,17 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     if [ "$MODE" = "cpu" ]; then pip install -r requirements-torch-cpu.txt; \
     elif [ "$MODE" = "gpu" ]; then pip install -r requirements-torch-gpu.txt; fi
 
-# Layer 3: TripoSR + ML deps (changes rarely, pinned commit)
+# Layer 3: TripoSR + ML deps (changes rarely)
+# TripoSR has no setup.py/pyproject.toml — clone via git, add to PYTHONPATH.
+# Model weights are NOT in the image — loaded at runtime from HF_HOME volume,
+# so fine-tuned weights can be swapped without rebuilding.
 COPY requirements-triposr.txt ./
 RUN --mount=type=cache,target=/root/.cache/pip \
-    if [ "$MODE" != "mock" ]; then pip install -r requirements-triposr.txt; fi
+    mkdir -p /opt/triposr \
+    && if [ "$MODE" != "mock" ]; then \
+         pip install -r requirements-triposr.txt \
+         && git clone --depth 1 https://github.com/VAST-AI-Research/TripoSR.git /opt/triposr; \
+       fi
 
 # ── Runtime stage ────────────────────────────────────────────────────────────
 FROM base-${MODE} AS runtime
@@ -73,6 +80,8 @@ WORKDIR /app
 # nvidia/cuda + apt python3.9 uses /usr/local/lib/python3.9/dist-packages
 COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+# Copy TripoSR source (empty dir in mock, full clone in cpu/gpu)
+COPY --from=builder /opt/triposr /opt/triposr
 RUN if [ "$MODE" = "gpu" ]; then \
       cp -rn /usr/local/lib/python3.9/site-packages/* /usr/local/lib/python3.9/dist-packages/ 2>/dev/null || true \
       && cp -rn /usr/local/lib/python3.9/site-packages/* /usr/lib/python3/dist-packages/ 2>/dev/null || true; \
@@ -83,7 +92,7 @@ COPY src/ ./src/
 COPY scripts/ ./scripts/
 
 # Common environment
-ENV PYTHONPATH=/app/src \
+ENV PYTHONPATH=/app/src:/opt/triposr \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     MALLOC_ARENA_MAX=2 \
