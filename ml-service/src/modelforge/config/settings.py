@@ -66,6 +66,12 @@ class Settings(BaseSettings):
         description="Local path to TripoSR model weights (optional)"
     )
 
+    # === Preprocessing ===
+    preprocess_image_size: int = Field(
+        default=512,
+        description="Target square image size for ML inference"
+    )
+
     # === Experiment flags ===
     experiment_collect_metrics: bool = Field(
         default=True,
