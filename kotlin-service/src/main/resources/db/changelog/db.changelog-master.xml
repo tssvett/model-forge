@@ -9,5 +9,6 @@
     <include file="db/changelog/002-create-tasks-table.sql"/>
     <include file="db/changelog/003-create-outbox-events-table.sql"/>
     <include file="db/changelog/004-create-app-settings-table.sql"/>
+    <include file="db/changelog/005-add-error-message-to-tasks.sql"/>
 
 </databaseChangeLog>

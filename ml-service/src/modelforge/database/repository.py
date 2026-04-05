@@ -29,7 +29,7 @@ class TaskRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    def update_status(self, task_id: str, status: str, result_path: Optional[str] = None) -> None:
+    def update_status(self, task_id: str, status: str, result_path: Optional[str] = None, error_msg: Optional[str] = None) -> None:
         pass
 
 
@@ -56,13 +56,18 @@ class TaskRepository(TaskRepositoryInterface):
         """No-op: task row is created by Kotlin service. We only update status."""
         pass
 
-    def update_status(self, task_id: str, status: str, result_path: Optional[str] = None) -> None:
+    def update_status(self, task_id: str, status: str, result_path: Optional[str] = None, error_msg: Optional[str] = None) -> None:
         conn = self._get_connection()
         cur = conn.cursor()
         if result_path:
             cur.execute(
                 "UPDATE tasks SET status=%s, s3_output_key=%s, updated_at=CURRENT_TIMESTAMP WHERE id=%s::uuid",
                 (status, result_path, task_id)
+            )
+        elif error_msg:
+            cur.execute(
+                "UPDATE tasks SET status=%s, error_message=%s, updated_at=CURRENT_TIMESTAMP WHERE id=%s::uuid",
+                (status, error_msg[:1000], task_id)
             )
         else:
             cur.execute(

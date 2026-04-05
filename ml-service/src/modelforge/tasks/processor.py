@@ -3,6 +3,7 @@ import time
 from typing import Union, Dict, Any
 
 from PIL import Image
+from pydantic import ValidationError
 
 from ..config import Settings
 from ..config.logging import get_logger
@@ -19,6 +20,7 @@ from ..metrics.collector import (
 from ..ml.factory import create_inference_service
 from ..ml.inference_interface import ModelInferenceInterface
 from ..storage.s3_client import S3StorageService
+from .models import TaskRequest
 
 logger = get_logger(__name__)
 
@@ -89,11 +91,19 @@ class TaskProcessor:
         :return: True on success, False on failure
         """
         task_id = task_data.get("task_id", "unknown")
-        input_config = task_data.get("input", {})
-        params = task_data.get("params", {})
 
-        input_s3_path = input_config.get("s3_path")
-        output_format = params.get("output_format", "glb")
+        try:
+            task = TaskRequest(**task_data)
+        except ValidationError as e:
+            logger.error("Invalid task message %s: %s", task_id, e)
+            TASKS_PROCESSED.labels(status="failed").inc()
+            TASKS_ERRORS.labels(error_type="ValidationError").inc()
+            self.repository.update_status(task_id, "FAILED", error_msg=str(e))
+            return False
+
+        task_id = task.task_id
+        input_s3_path = task.input.s3_path
+        output_format = task.params.output_format
 
         logger.info("Starting task %s for %s", task_id, input_s3_path)
 
@@ -117,7 +127,7 @@ class TaskProcessor:
             # 3. Run inference (mock or real — transparent via interface)
             logger.info("Running ML inference...")
             infer_start = time.monotonic()
-            result = self.ml_service.infer(image, params)
+            result = self.ml_service.infer(image, task.params.model_dump())
             ML_INFERENCE_DURATION.observe(time.monotonic() - infer_start)
 
             if not result.success:
@@ -156,7 +166,7 @@ class TaskProcessor:
             logger.error("Error processing task %s: %s", task_id, e, exc_info=True)
             TASKS_PROCESSED.labels(status="failed").inc()
             TASKS_ERRORS.labels(error_type=type(e).__name__).inc()
-            self.repository.update_status(task_id, "FAILED")
+            self.repository.update_status(task_id, "FAILED", error_msg=str(e))
             return False
 
         finally:
