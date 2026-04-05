@@ -16,6 +16,8 @@ boto3==1.34.0
 pillow==10.1.0
 trimesh==4.0.5
 numpy==1.24.3
+rembg==2.0.50
+onnxruntime==1.17.0
 
 # Testing
 pytest==7.4.3

@@ -52,7 +52,11 @@ class TestTaskProcessor:
         """Тест успешной обработки задачи."""
         mock_storage.download_file.return_value = b"fake image"
         mock_storage.upload_bytes.side_effect = lambda k, d: f"s3://bucket/{k}"
-        mock_image.open.return_value.convert.return_value = MagicMock()
+        fake_img = MagicMock(spec=Image.Image)
+        fake_img.size = (256, 256)
+        mock_image.open.return_value.convert.return_value = fake_img
+        processor.preprocessor = Mock()
+        processor.preprocessor.preprocess.return_value = fake_img
 
         task_data = {
             "task_id": "test-123",

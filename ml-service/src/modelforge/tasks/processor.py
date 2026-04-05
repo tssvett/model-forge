@@ -19,6 +19,7 @@ from ..metrics.collector import (
 )
 from ..ml.factory import create_inference_service
 from ..ml.inference_interface import ModelInferenceInterface
+from ..preprocessing.pipeline import ImagePreprocessor
 from ..storage.s3_client import S3StorageService
 from .models import TaskRequest
 
@@ -46,6 +47,7 @@ class TaskProcessor:
 
         # Build the initial inference service from env-based settings
         self.ml_service: ModelInferenceInterface = create_inference_service(settings)
+        self.preprocessor = ImagePreprocessor(settings)
         self._active_mock_mode: bool = settings.ml_mock_mode
         self._active_device: str = settings.tripsr_device
 
@@ -124,7 +126,10 @@ class TaskProcessor:
             S3_OPERATION_DURATION.labels(operation="download").observe(time.monotonic() - s3_start)
             image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
-            # 3. Run inference (mock or real — transparent via interface)
+            # 3. Preprocess image (validate, remove background, resize)
+            image = self.preprocessor.preprocess(image, task.params.model_dump())
+
+            # 4. Run inference (mock or real — transparent via interface)
             logger.info("Running ML inference...")
             infer_start = time.monotonic()
             result = self.ml_service.infer(image, task.params.model_dump())
@@ -133,7 +138,7 @@ class TaskProcessor:
             if not result.success:
                 raise RuntimeError(f"ML inference failed: {result.error}")
 
-            # 4. Upload results to S3
+            # 5. Upload results to S3
             mesh_key = f"results/{task_id}/model.{output_format}"
             texture_key = f"results/{task_id}/texture.png"
 
@@ -147,7 +152,7 @@ class TaskProcessor:
                 texture_url = self.storage.upload_bytes(texture_key, result.texture_bytes)
                 S3_OPERATION_DURATION.labels(operation="upload").observe(time.monotonic() - s3_start)
 
-            # 5. Build result metadata
+            # 6. Build result metadata
             db_result = {
                 "model_url": mesh_url,
                 "texture_url": texture_url,
@@ -155,7 +160,7 @@ class TaskProcessor:
                 "metrics": result.metrics,
             }
 
-            # 6. Mark task completed (s3_output_key = mesh S3 key)
+            # 7. Mark task completed (s3_output_key = mesh S3 key)
             self.repository.update_status(task_id, "COMPLETED", mesh_key)
 
             TASKS_PROCESSED.labels(status="success").inc()

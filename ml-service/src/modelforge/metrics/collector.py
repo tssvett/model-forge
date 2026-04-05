@@ -33,6 +33,13 @@ ML_INFERENCE_DURATION = Histogram(
     buckets=[0.5, 1, 2, 5, 10, 30, 60, 120, 300],
 )
 
+# Preprocessing metrics
+PREPROCESSING_DURATION = Histogram(
+    "preprocessing_duration_seconds",
+    "Time spent on image preprocessing (validation, background removal, resize)",
+    buckets=[0.1, 0.5, 1, 2, 5, 10, 30],
+)
+
 # S3 operation metrics
 S3_OPERATION_DURATION = Histogram(
     "s3_operation_duration_seconds",
