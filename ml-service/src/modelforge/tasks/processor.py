@@ -1,12 +1,13 @@
 import io
 import time
-from typing import Dict, Any
+from typing import Union, Dict, Any
 
 from PIL import Image
 
 from ..config import Settings
 from ..config.logging import get_logger
 from ..database.repository import TaskRepository
+from ..kafka.models import TaskRequest
 from ..metrics.collector import (
     TASKS_PROCESSED,
     TASKS_ERRORS,
