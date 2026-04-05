@@ -118,7 +118,7 @@ All application code lives in `ml-service/src/modelforge/` with these layers:
 - **config/** — Pydantic `BaseSettings` for env-based configuration; JSON/text logging setup
 - **metrics/** — Prometheus metrics (`prometheus-client`): task counters, duration histograms, S3/inference timing. Exposes `/metrics` on port 8000
 
-TripoSR inference can run on GPU or CPU. Three Dockerfiles exist: `Dockerfile` (mock only, no torch), `Dockerfile.gpu` (CUDA 11.8 + torch GPU), `Dockerfile.cpu` (torch CPU). Use `make gpu` for GPU or `make cpu-inference` for CPU inference. HuggingFace model is cached in a persistent volume.
+TripoSR inference can run on GPU or CPU. Single unified `Dockerfile` with `ARG MODE=mock|cpu|gpu` — build via `docker build --build-arg MODE=cpu .` or use `make gpu` / `make cpu-inference`. TripoSR is git-cloned into `/opt/triposr` (no setup.py). HuggingFace model weights are cached in a persistent volume (`HF_HOME`), not baked into the image.
 
 ## Key Patterns
 
@@ -135,9 +135,100 @@ GitHub Actions workflows in `.github/workflows/`:
 - `kotlin-service-ci.yml` — triggers on `kotlin-service/**` changes: Gradle build → integration tests → Docker build
 - `ml-service-ci.yml` — triggers on `ml-service/**` changes: pip install → pytest → Docker build
 
+## Token Economy — MANDATORY ⚠️ КРИТИЧЕСКИ ВАЖНО
+
+You MUST minimize context window consumption. This is not optional. **EVERY token counts.** Past sessions wasted tokens massively (73+ Bash calls, 58+ Read calls per session). This MUST NOT repeat.
+
+### Rules
+
+1. **NEVER use Bash for commands producing >20 lines of output.** Use `ctx_batch_execute` instead — it indexes results in FTS5 and returns only a summary. Bash is ONLY for: git writes, mkdir, rm, mv, navigation, and short-output commands.
+2. **NEVER use Read for analysis/exploration.** Use `ctx_execute_file(path, language, code)` instead. Use Read ONLY when you plan to Edit the file immediately after.
+3. **Use `ctx_batch_execute`** for all git, gh, docker, and system commands. ONE call replaces many individual Bash calls.
+4. **Use `ctx_search`** for follow-up queries instead of re-running commands or re-reading files.
+5. **CI polling:** Write a single script via `ctx_execute` that checks and summarizes CI status, instead of multiple raw `gh` calls.
+6. **NEVER read the same file twice.** If you already read it, use `ctx_search` to recall what you need.
+7. **Agent subagent results** are returned to context — keep them focused and concise by writing precise prompts.
+8. **NEVER use WebFetch.** Use `ctx_fetch_and_index` instead.
+
+### Tool Selection Priority
+
+| Task | Use | NOT |
+|------|-----|-----|
+| Run commands, check status | `ctx_batch_execute` | Bash |
+| Analyze/explore files | `ctx_execute_file` | Read |
+| Follow-up questions | `ctx_search` | Re-run commands |
+| Fetch URLs | `ctx_fetch_and_index` | WebFetch |
+| Edit files | Read → Edit | (Read is OK here) |
+
+## Workflow Tools — MANDATORY
+
+### Beads (Issue Tracking)
+Beads is initialized in this project. Use it for multi-session task tracking:
+- **Start of session:** Run `/beads:ready` to find tasks to work on
+- **During work:** Update issue status, add comments via `/beads:comments`
+- **Creating tasks:** Use `/beads:beads` for issue CRUD
+- **Before finishing:** Log work via `/beads:audit`
+
+### Template Bridge
+Use `/template-bridge:unified-workflow` at the start of development sessions. This combines Superpowers + Beads + Templates for structured development:
+- **Before coding:** Check for relevant templates via `/template-bridge:browse-templates`
+- **Feature work:** Use `/feature-dev:feature-dev` for guided development
+- **Plans:** Use `/superpowers:writing-plans` before multi-step tasks
+
+### Context-Mode
+Always verify context-mode is active. Use `/ctx-stats` to check savings. Target: **>70% context savings** per session.
+
 ## Language & Runtime
 
 - **Kotlin Service:** Kotlin 1.9.22, Spring Boot 3.2.2, JDK 17, Gradle 8.5
-- **ML Service:** Python 3.9, dependencies in `ml-service/requirements.txt` (base), `requirements-cpu.txt` (CPU inference), `requirements-gpu.txt` (GPU inference). Docker images: `python:3.9-slim` (mock), `nvidia/cuda:11.8.0-runtime` (GPU)
+- **ML Service:** Python 3.9, dependencies in `ml-service/requirements.txt` (base), `requirements-cpu.txt` (CPU inference), `requirements-gpu.txt` (GPU inference). Single unified Dockerfile with `ARG MODE=mock|cpu|gpu`. Docker images: `python:3.9-slim` (mock/cpu), `nvidia/cuda:11.8.0-runtime` (GPU)
 - **Frontend:** React 18.3.1, Vite 5.3.1, React Router 6.23.1, Node 18+
 - Commit messages are in Russian
+
+
+<!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
+## Beads Issue Tracker
+
+This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
+
+### Quick Reference
+
+```bash
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --claim  # Claim work
+bd close <id>         # Complete work
+```
+
+### Rules
+
+- Use `bd` for ALL task tracking — do NOT use TodoWrite, TaskCreate, or markdown TODO lists
+- Run `bd prime` for detailed command reference and session close protocol
+- Use `bd remember` for persistent knowledge — do NOT use MEMORY.md files
+
+## Session Completion
+
+**When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
+
+**MANDATORY WORKFLOW:**
+
+1. **File issues for remaining work** - Create issues for anything that needs follow-up
+2. **Run quality gates** (if code changed) - Tests, linters, builds
+3. **Update issue status** - Close finished work, update in-progress items
+4. **PUSH TO REMOTE** - This is MANDATORY:
+   ```bash
+   git pull --rebase
+   bd dolt push
+   git push
+   git status  # MUST show "up to date with origin"
+   ```
+5. **Clean up** - Clear stashes, prune remote branches
+6. **Verify** - All changes committed AND pushed
+7. **Hand off** - Provide context for next session
+
+**CRITICAL RULES:**
+- Work is NOT complete until `git push` succeeds
+- NEVER stop before pushing - that leaves work stranded locally
+- NEVER say "ready to push when you are" - YOU must push
+- If push fails, resolve and retry until it succeeds
+<!-- END BEADS INTEGRATION -->
