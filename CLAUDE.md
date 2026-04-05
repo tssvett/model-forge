@@ -163,11 +163,12 @@ You MUST minimize context window consumption. This is not optional. **EVERY toke
 ## Workflow Tools — MANDATORY
 
 ### Beads (Issue Tracking)
-Beads is initialized in this project. Use it for multi-session task tracking:
-- **Start of session:** Run `/beads:ready` to find tasks to work on
-- **During work:** Update issue status, add comments via `/beads:comments`
-- **Creating tasks:** Use `/beads:beads` for issue CRUD
-- **Before finishing:** Log work via `/beads:audit`
+Beads is initialized in this project (prefix: `mf`). Use `bd` CLI for all task tracking:
+- **Start of session:** `bd prime` for context, `bd ready` to find tasks
+- **During work:** `bd update <id> --claim`, `bd show <id>`
+- **Creating tasks:** `bd create -t "title" -b "body"`
+- **Before finishing:** `bd close <id>`, then `bd dolt push && git push`
+- **Do NOT use** TodoWrite, TaskCreate, or markdown TODO lists — use `bd` only
 
 ### Template Bridge
 Use `/template-bridge:unified-workflow` at the start of development sessions. This combines Superpowers + Beads + Templates for structured development:
