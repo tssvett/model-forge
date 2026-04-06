@@ -8,6 +8,7 @@ import com.modelforge.exception.InvalidFileException
 import com.modelforge.exception.TaskAccessDeniedException
 import com.modelforge.exception.TaskNotFoundException
 import com.modelforge.exception.TaskNotCompletedException
+import com.modelforge.repository.GenerationMetricsRepository
 import com.modelforge.repository.OutboxRepository
 import com.modelforge.repository.TaskRepository
 import org.junit.jupiter.api.Assertions.*
@@ -21,10 +22,11 @@ class TaskServiceTest {
 
     private val taskRepository: TaskRepository = mock()
     private val outboxRepository: OutboxRepository = mock()
+    private val generationMetricsRepository: GenerationMetricsRepository = mock()
     private val objectMapper = ObjectMapper().findAndRegisterModules()
     private val minioService: MinioService = mock()
 
-    private val taskService = TaskService(taskRepository, outboxRepository, objectMapper, minioService)
+    private val taskService = TaskService(taskRepository, outboxRepository, generationMetricsRepository, objectMapper, minioService)
 
     private val userId = UUID.randomUUID()
 
