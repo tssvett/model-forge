@@ -17,6 +17,7 @@ from ..metrics.collector import (
     ML_INFERENCE_DURATION,
     S3_OPERATION_DURATION,
 )
+from ..metrics.quality import compute_self_metrics
 from ..ml.factory import create_inference_service
 from ..ml.inference_interface import ModelInferenceInterface
 from ..preprocessing.pipeline import ImagePreprocessor
@@ -138,6 +139,28 @@ class TaskProcessor:
             if not result.success:
                 raise RuntimeError(f"ML inference failed: {result.error}")
 
+            # 4.1. Compute mesh quality metrics
+            if self.settings.experiment_collect_metrics and result.mesh_bytes:
+                try:
+                    import io as _io
+                    import trimesh
+                    mesh = trimesh.load(
+                        _io.BytesIO(result.mesh_bytes),
+                        file_type=output_format,
+                        force="mesh",
+                    )
+                    quality = compute_self_metrics(mesh)
+                    quality_dict = quality.to_dict()
+                    quality_dict["inference_time_sec"] = result.metrics.get("inference_time_sec")
+                    quality_dict["is_mock"] = result.metrics.get("mock_mode", False)
+                    # Merge quality metrics into result.metrics
+                    result.metrics.update(quality_dict)
+                    # Persist to DB
+                    self.repository.save_generation_metrics(task_id, quality_dict)
+                    logger.info("Saved quality metrics for task %s: %s", task_id, quality_dict)
+                except Exception as e:
+                    logger.warning("Failed to compute/save quality metrics for task %s: %s", task_id, e)
+
             # 5. Upload results to S3
             mesh_key = f"results/{task_id}/model.{output_format}"
             texture_key = f"results/{task_id}/texture.png"
@@ -151,6 +174,16 @@ class TaskProcessor:
                 s3_start = time.monotonic()
                 texture_url = self.storage.upload_bytes(texture_key, result.texture_bytes)
                 S3_OPERATION_DURATION.labels(operation="upload").observe(time.monotonic() - s3_start)
+
+            # 5.1. Upload metrics JSON to S3
+            if result.metrics:
+                try:
+                    import json
+                    metrics_key = f"results/{task_id}/metrics.json"
+                    metrics_json = json.dumps(result.metrics, default=str).encode("utf-8")
+                    self.storage.upload_bytes(metrics_key, metrics_json)
+                except Exception as e:
+                    logger.warning("Failed to upload metrics JSON for task %s: %s", task_id, e)
 
             # 6. Build result metadata
             db_result = {
