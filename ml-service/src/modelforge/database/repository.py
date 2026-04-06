@@ -80,15 +80,17 @@ class TaskRepository(TaskRepositoryInterface):
 
     def save_generation_metrics(self, task_id: str, metrics: Dict[str, any]) -> None:
         """Save generation quality metrics to generation_metrics table."""
+        import uuid
         conn = self._get_connection()
         cur = conn.cursor()
         try:
+            metrics_id = str(uuid.uuid4())
             cur.execute(
                 """
                 INSERT INTO generation_metrics (
-                    task_id, chamfer_distance, iou_3d, f_score, normal_consistency,
+                    id, task_id, chamfer_distance, iou_3d, f_score, normal_consistency,
                     vertices, faces, inference_time_sec, is_mock
-                ) VALUES (%s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (task_id) DO UPDATE SET
                     chamfer_distance = EXCLUDED.chamfer_distance,
                     iou_3d = EXCLUDED.iou_3d,
@@ -100,6 +102,7 @@ class TaskRepository(TaskRepositoryInterface):
                     is_mock = EXCLUDED.is_mock
                 """,
                 (
+                    metrics_id,
                     task_id,
                     metrics.get("chamfer_distance"),
                     metrics.get("iou_3d"),
