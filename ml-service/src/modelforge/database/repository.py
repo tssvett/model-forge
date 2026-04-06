@@ -78,6 +78,49 @@ class TaskRepository(TaskRepositoryInterface):
         cur.close()
         conn.close()
 
+    def save_generation_metrics(self, task_id: str, metrics: Dict[str, any]) -> None:
+        """Save generation quality metrics to generation_metrics table."""
+        conn = self._get_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                """
+                INSERT INTO generation_metrics (
+                    task_id, chamfer_distance, iou_3d, f_score, normal_consistency,
+                    vertices, faces, inference_time_sec, is_mock
+                ) VALUES (%s::uuid, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (task_id) DO UPDATE SET
+                    chamfer_distance = EXCLUDED.chamfer_distance,
+                    iou_3d = EXCLUDED.iou_3d,
+                    f_score = EXCLUDED.f_score,
+                    normal_consistency = EXCLUDED.normal_consistency,
+                    vertices = EXCLUDED.vertices,
+                    faces = EXCLUDED.faces,
+                    inference_time_sec = EXCLUDED.inference_time_sec,
+                    is_mock = EXCLUDED.is_mock
+                """,
+                (
+                    task_id,
+                    metrics.get("chamfer_distance"),
+                    metrics.get("iou_3d"),
+                    metrics.get("f_score"),
+                    metrics.get("normal_consistency"),
+                    metrics.get("vertices"),
+                    metrics.get("faces"),
+                    metrics.get("inference_time_sec"),
+                    metrics.get("is_mock", False),
+                ),
+            )
+            conn.commit()
+            logger.info("Saved generation metrics for task %s", task_id)
+        except Exception as e:
+            conn.rollback()
+            logger.error("Failed to save metrics for task %s: %s", task_id, e)
+            raise
+        finally:
+            cur.close()
+            conn.close()
+
     def get_app_settings(self) -> Dict[str, str]:
         """Read runtime ML settings from app_settings table."""
         conn = self._get_connection()

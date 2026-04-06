@@ -2,6 +2,7 @@ package com.modelforge.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.modelforge.dto.ErrorResponse
+import com.modelforge.dto.GenerationMetricsResponse
 import com.modelforge.dto.PagedResponse
 import com.modelforge.dto.TaskResponse
 import com.modelforge.entity.TaskStatus
@@ -89,6 +90,24 @@ class TaskController(
         val effectiveSize = size.coerceIn(1, 100)
         val userId = authentication.principal as UUID
         val response = taskService.getUserTasksPaged(userId, page, effectiveSize, status)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/{id}/metrics")
+    @Operation(summary = "Получить метрики генерации")
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Метрики найдены",
+            content = [Content(schema = Schema(implementation = GenerationMetricsResponse::class))]),
+        ApiResponse(responseCode = "404", description = "Задача или метрики не найдены",
+            content = [Content(schema = Schema(implementation = ErrorResponse::class))]),
+        ApiResponse(responseCode = "403", description = "Не авторизован")
+    )
+    fun getTaskMetrics(
+        @PathVariable id: UUID,
+        authentication: Authentication
+    ): ResponseEntity<GenerationMetricsResponse> {
+        val userId = authentication.principal as UUID
+        val response = taskService.getTaskMetrics(id, userId)
         return ResponseEntity.ok(response)
     }
 

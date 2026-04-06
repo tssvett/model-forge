@@ -42,3 +42,16 @@ data class PagedResponse<T>(
     val totalElements: Long,
     val totalPages: Int
 )
+
+data class GenerationMetricsResponse(
+    val taskId: UUID,
+    val chamferDistance: Double?,
+    val iou3d: Double?,
+    val fScore: Double?,
+    val normalConsistency: Double?,
+    val vertices: Int?,
+    val faces: Int?,
+    val inferenceTimeSec: Double?,
+    val isMock: Boolean,
+    val createdAt: Instant
+)

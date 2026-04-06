@@ -1,6 +1,7 @@
 package com.modelforge.service
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.modelforge.dto.GenerationMetricsResponse
 import com.modelforge.dto.PagedResponse
 import com.modelforge.dto.TaskCreatedEvent
 import com.modelforge.dto.TaskDownloadResult
@@ -11,6 +12,7 @@ import com.modelforge.exception.InvalidFileException
 import com.modelforge.exception.TaskAccessDeniedException
 import com.modelforge.exception.TaskNotFoundException
 import com.modelforge.exception.TaskNotCompletedException
+import com.modelforge.repository.GenerationMetricsRepository
 import com.modelforge.repository.OutboxRepository
 import com.modelforge.repository.TaskRepository
 import org.slf4j.LoggerFactory
@@ -24,6 +26,7 @@ import java.util.UUID
 class TaskService(
     private val taskRepository: TaskRepository,
     private val outboxRepository: OutboxRepository,
+    private val generationMetricsRepository: GenerationMetricsRepository,
     private val objectMapper: ObjectMapper,
     private val minioService: MinioService
 ) {
@@ -141,6 +144,31 @@ class TaskService(
             fileBytes = fileBytes,
             format = format,
             generatedAt = task.updatedAt
+        )
+    }
+
+    fun getTaskMetrics(taskId: UUID, userId: UUID): GenerationMetricsResponse {
+        val task = taskRepository.findById(taskId)
+            ?: throw TaskNotFoundException(taskId)
+
+        if (task.userId != userId) {
+            throw TaskAccessDeniedException(taskId)
+        }
+
+        val metrics = generationMetricsRepository.findByTaskId(taskId)
+            ?: throw TaskNotFoundException(taskId)
+
+        return GenerationMetricsResponse(
+            taskId = metrics.taskId,
+            chamferDistance = metrics.chamferDistance,
+            iou3d = metrics.iou3d,
+            fScore = metrics.fScore,
+            normalConsistency = metrics.normalConsistency,
+            vertices = metrics.vertices,
+            faces = metrics.faces,
+            inferenceTimeSec = metrics.inferenceTimeSec,
+            isMock = metrics.isMock,
+            createdAt = metrics.createdAt
         )
     }
 
