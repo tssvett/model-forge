@@ -2,7 +2,7 @@
 
 --changeset modelforge:006-create-generation-metrics-table
 CREATE TABLE IF NOT EXISTS generation_metrics (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY,
     task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
     chamfer_distance DOUBLE PRECISION,
     iou_3d DOUBLE PRECISION,
