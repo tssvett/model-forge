@@ -72,6 +72,28 @@ class Settings(BaseSettings):
         description="Target square image size for ML inference"
     )
 
+    # === Fine-tuning ===
+    finetuning_dataset_root: str = Field(
+        default="data/shapenet",
+        description="Root path to training dataset (ShapeNet/Objaverse)"
+    )
+    finetuning_dataset_type: str = Field(
+        default="shapenet",
+        description="Dataset type: 'shapenet' or 'objaverse'"
+    )
+    finetuning_batch_size: int = Field(
+        default=4,
+        description="Training batch size"
+    )
+    finetuning_image_size: int = Field(
+        default=512,
+        description="Image size for fine-tuning"
+    )
+    finetuning_seed: int = Field(
+        default=42,
+        description="Random seed for reproducibility"
+    )
+
     # === Experiment flags ===
     experiment_collect_metrics: bool = Field(
         default=True,
