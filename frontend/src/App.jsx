@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import TaskCreate from './pages/TaskCreate'
 import TaskDetail from './pages/TaskDetail'
 import Settings from './pages/Settings'
+import Analytics from './pages/Analytics'
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/tasks/new" element={<TaskCreate />} />
             <Route path="/tasks/:id" element={<TaskDetail />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
