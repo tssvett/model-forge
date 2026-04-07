@@ -4,7 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.modelforge.dto.ErrorResponse
 import com.modelforge.dto.GenerationMetricsResponse
 import com.modelforge.dto.PagedResponse
+import com.modelforge.dto.TaskAnalyticsSummaryResponse
 import com.modelforge.dto.TaskResponse
+import com.modelforge.dto.TaskTimelineResponse
+import com.modelforge.dto.TaskWithMetricsResponse
 import com.modelforge.entity.TaskStatus
 import com.modelforge.service.TaskService
 import io.swagger.v3.oas.annotations.Operation
@@ -90,6 +93,62 @@ class TaskController(
         val effectiveSize = size.coerceIn(1, 100)
         val userId = authentication.principal as UUID
         val response = taskService.getUserTasksPaged(userId, page, effectiveSize, status)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/analytics/summary")
+    @Operation(summary = "Получить сводную аналитику по задачам пользователя")
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Аналитика",
+            content = [Content(schema = Schema(implementation = TaskAnalyticsSummaryResponse::class))]),
+        ApiResponse(responseCode = "403", description = "Не авторизован")
+    )
+    fun getAnalyticsSummary(
+        authentication: Authentication
+    ): ResponseEntity<TaskAnalyticsSummaryResponse> {
+        val userId = authentication.principal as UUID
+        val response = taskService.getAnalyticsSummary(userId)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/analytics/timeline")
+    @Operation(
+        summary = "Получить таймлайн задач по дням",
+        description = "Возвращает количество задач по дням за указанный период"
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Таймлайн задач",
+            content = [Content(schema = Schema(implementation = TaskTimelineResponse::class))]),
+        ApiResponse(responseCode = "403", description = "Не авторизован")
+    )
+    fun getTaskTimeline(
+        @RequestParam(defaultValue = "30") days: Int,
+        authentication: Authentication
+    ): ResponseEntity<TaskTimelineResponse> {
+        val userId = authentication.principal as UUID
+        val response = taskService.getTaskTimeline(userId, days)
+        return ResponseEntity.ok(response)
+    }
+
+    @GetMapping("/with-metrics")
+    @Operation(
+        summary = "Получить задачи с метриками (для аналитики)",
+        description = "Возвращает задачи вместе с метриками генерации, с пагинацией"
+    )
+    @ApiResponses(
+        ApiResponse(responseCode = "200", description = "Задачи с метриками",
+            content = [Content(schema = Schema(implementation = PagedResponse::class))]),
+        ApiResponse(responseCode = "403", description = "Не авторизован")
+    )
+    fun getTasksWithMetrics(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(required = false) status: TaskStatus?,
+        authentication: Authentication
+    ): ResponseEntity<PagedResponse<TaskWithMetricsResponse>> {
+        val effectiveSize = size.coerceIn(1, 100)
+        val userId = authentication.principal as UUID
+        val response = taskService.getUserTasksWithMetrics(userId, page, effectiveSize, status)
         return ResponseEntity.ok(response)
     }
 

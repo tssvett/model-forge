@@ -33,4 +33,33 @@ class GenerationMetricsRepository(private val jdbcTemplate: JdbcTemplate) {
         )
         return results.firstOrNull()
     }
+
+    fun getAverageMetricsByUserId(userId: UUID): Map<String, Double?> {
+        val sql = """
+            SELECT AVG(gm.inference_time_sec) as avg_inference_time,
+                   AVG(gm.chamfer_distance) as avg_chamfer_distance,
+                   AVG(gm.iou_3d) as avg_iou_3d,
+                   AVG(gm.f_score) as avg_f_score,
+                   AVG(gm.normal_consistency) as avg_normal_consistency,
+                   AVG(gm.vertices) as avg_vertices,
+                   AVG(gm.faces) as avg_faces
+            FROM generation_metrics gm
+            JOIN tasks t ON t.id = gm.task_id
+            WHERE t.user_id = ?
+        """
+        return jdbcTemplate.queryForMap(sql, userId).mapValues { (_, v) ->
+            (v as? Number)?.toDouble()
+        }
+    }
+
+    fun findByUserIdPaged(userId: UUID, offset: Long, limit: Int): List<GenerationMetrics> {
+        val sql = """
+            SELECT gm.* FROM generation_metrics gm
+            JOIN tasks t ON t.id = gm.task_id
+            WHERE t.user_id = ?
+            ORDER BY gm.created_at DESC
+            LIMIT ? OFFSET ?
+        """
+        return jdbcTemplate.query(sql, rowMapper, userId, limit, offset)
+    }
 }

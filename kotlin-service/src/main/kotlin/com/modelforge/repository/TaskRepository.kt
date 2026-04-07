@@ -85,4 +85,32 @@ class TaskRepository(private val jdbcTemplate: JdbcTemplate) {
             status.name, id
         )
     }
+
+    fun countByUserIdAndStatus(userId: UUID, status: TaskStatus): Long {
+        return jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM tasks WHERE user_id = ? AND status = ?",
+            Long::class.java, userId, status.name
+        )!!
+    }
+
+    fun getTaskTimeline(userId: UUID, days: Int): List<Map<String, Any>> {
+        val sql = """
+            SELECT DATE(created_at) as date,
+                   COUNT(*) as total,
+                   COUNT(*) FILTER (WHERE status = 'COMPLETED') as completed,
+                   COUNT(*) FILTER (WHERE status = 'FAILED') as failed
+            FROM tasks
+            WHERE user_id = ? AND created_at >= NOW() - CAST(? || ' days' AS INTERVAL)
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        """
+        return jdbcTemplate.query(sql, { rs, _ ->
+            mapOf(
+                "date" to rs.getString("date"),
+                "total" to rs.getLong("total"),
+                "completed" to rs.getLong("completed"),
+                "failed" to rs.getLong("failed")
+            )
+        }, userId, days.toString())
+    }
 }

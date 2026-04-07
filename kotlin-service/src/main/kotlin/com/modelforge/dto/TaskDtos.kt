@@ -55,3 +55,36 @@ data class GenerationMetricsResponse(
     val isMock: Boolean,
     val createdAt: Instant
 )
+
+data class TaskAnalyticsSummaryResponse(
+    val totalTasks: Long,
+    val completedTasks: Long,
+    val failedTasks: Long,
+    val pendingTasks: Long,
+    val processingTasks: Long,
+    val successRate: Double,
+    val avgInferenceTimeSec: Double?,
+    val avgChamferDistance: Double?,
+    val avgIou3d: Double?,
+    val avgFScore: Double?,
+    val avgNormalConsistency: Double?,
+    val avgVertices: Double?,
+    val avgFaces: Double?
+)
+
+data class TaskTimelineEntry(
+    val date: String,
+    val total: Long,
+    val completed: Long,
+    val failed: Long
+)
+
+data class TaskTimelineResponse(
+    val entries: List<TaskTimelineEntry>,
+    val period: String
+)
+
+data class TaskWithMetricsResponse(
+    val task: TaskResponse,
+    val metrics: GenerationMetricsResponse?
+)
