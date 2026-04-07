@@ -3,9 +3,13 @@ package com.modelforge.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.modelforge.dto.GenerationMetricsResponse
 import com.modelforge.dto.PagedResponse
+import com.modelforge.dto.TaskAnalyticsSummaryResponse
 import com.modelforge.dto.TaskCreatedEvent
 import com.modelforge.dto.TaskDownloadResult
 import com.modelforge.dto.TaskResponse
+import com.modelforge.dto.TaskTimelineEntry
+import com.modelforge.dto.TaskTimelineResponse
+import com.modelforge.dto.TaskWithMetricsResponse
 import com.modelforge.entity.OutboxEvent
 import com.modelforge.entity.Task
 import com.modelforge.exception.InvalidFileException
@@ -169,6 +173,82 @@ class TaskService(
             inferenceTimeSec = metrics.inferenceTimeSec,
             isMock = metrics.isMock,
             createdAt = metrics.createdAt
+        )
+    }
+
+    fun getAnalyticsSummary(userId: UUID): TaskAnalyticsSummaryResponse {
+        val total = taskRepository.countByUserId(userId, null)
+        val completed = taskRepository.countByUserIdAndStatus(userId, TaskStatus.COMPLETED)
+        val failed = taskRepository.countByUserIdAndStatus(userId, TaskStatus.FAILED)
+        val pending = taskRepository.countByUserIdAndStatus(userId, TaskStatus.PENDING)
+        val processing = taskRepository.countByUserIdAndStatus(userId, TaskStatus.PROCESSING)
+        val successRate = if (total > 0) completed.toDouble() / total * 100 else 0.0
+        val avgMetrics = generationMetricsRepository.getAverageMetricsByUserId(userId)
+
+        return TaskAnalyticsSummaryResponse(
+            totalTasks = total,
+            completedTasks = completed,
+            failedTasks = failed,
+            pendingTasks = pending,
+            processingTasks = processing,
+            successRate = successRate,
+            avgInferenceTimeSec = avgMetrics["avg_inference_time"],
+            avgChamferDistance = avgMetrics["avg_chamfer_distance"],
+            avgIou3d = avgMetrics["avg_iou_3d"],
+            avgFScore = avgMetrics["avg_f_score"],
+            avgNormalConsistency = avgMetrics["avg_normal_consistency"],
+            avgVertices = avgMetrics["avg_vertices"],
+            avgFaces = avgMetrics["avg_faces"]
+        )
+    }
+
+    fun getTaskTimeline(userId: UUID, days: Int): TaskTimelineResponse {
+        val effectiveDays = days.coerceIn(1, 365)
+        val rows = taskRepository.getTaskTimeline(userId, effectiveDays)
+        val entries = rows.map { row ->
+            TaskTimelineEntry(
+                date = row["date"] as String,
+                total = row["total"] as Long,
+                completed = row["completed"] as Long,
+                failed = row["failed"] as Long
+            )
+        }
+        return TaskTimelineResponse(entries = entries, period = "${effectiveDays}d")
+    }
+
+    fun getUserTasksWithMetrics(userId: UUID, page: Int, size: Int, status: TaskStatus?): PagedResponse<TaskWithMetricsResponse> {
+        val offset = page.toLong() * size
+        val tasks = taskRepository.findByUserIdPaged(userId, status, offset, size)
+        val totalElements = taskRepository.countByUserId(userId, status)
+        val totalPages = if (totalElements == 0L) 0 else ((totalElements - 1) / size + 1).toInt()
+
+        val content = tasks.map { task ->
+            val metrics = generationMetricsRepository.findByTaskId(task.id)
+            TaskWithMetricsResponse(
+                task = toResponse(task),
+                metrics = metrics?.let {
+                    GenerationMetricsResponse(
+                        taskId = it.taskId,
+                        chamferDistance = it.chamferDistance,
+                        iou3d = it.iou3d,
+                        fScore = it.fScore,
+                        normalConsistency = it.normalConsistency,
+                        vertices = it.vertices,
+                        faces = it.faces,
+                        inferenceTimeSec = it.inferenceTimeSec,
+                        isMock = it.isMock,
+                        createdAt = it.createdAt
+                    )
+                }
+            )
+        }
+
+        return PagedResponse(
+            content = content,
+            page = page,
+            size = size,
+            totalElements = totalElements,
+            totalPages = totalPages
         )
     }
 
