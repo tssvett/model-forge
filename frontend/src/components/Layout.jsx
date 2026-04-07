@@ -22,6 +22,9 @@ export default function Layout() {
             <Link to="/tasks/new" className={styles.navLink}>
               New Task
             </Link>
+            <Link to="/analytics" className={styles.navLink}>
+              Analytics
+            </Link>
             <Link to="/settings" className={styles.navLink}>
               Settings
             </Link>
