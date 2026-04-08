@@ -94,6 +94,44 @@ class Settings(BaseSettings):
         description="Random seed for reproducibility"
     )
 
+    # === Training ===
+    training_num_epochs: int = Field(
+        default=50,
+        description="Number of training epochs"
+    )
+    training_learning_rate: float = Field(
+        default=1e-4,
+        description="Initial learning rate"
+    )
+    training_lr_schedule: str = Field(
+        default="cosine",
+        description="LR schedule: 'cosine', 'step', or 'constant'"
+    )
+    training_warmup_epochs: int = Field(
+        default=3,
+        description="Number of warmup epochs"
+    )
+    training_checkpoint_dir: str = Field(
+        default="checkpoints/triposr",
+        description="Directory for saving training checkpoints"
+    )
+    training_early_stopping_patience: int = Field(
+        default=10,
+        description="Epochs without improvement before early stopping (0=disabled)"
+    )
+    training_chamfer_weight: float = Field(
+        default=1.0,
+        description="Weight for Chamfer distance loss"
+    )
+    training_edge_weight: float = Field(
+        default=0.1,
+        description="Weight for edge length regularization loss"
+    )
+    training_laplacian_weight: float = Field(
+        default=0.05,
+        description="Weight for Laplacian smoothing loss"
+    )
+
     # === Experiment flags ===
     experiment_collect_metrics: bool = Field(
         default=True,

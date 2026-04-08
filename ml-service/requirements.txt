@@ -15,7 +15,7 @@ boto3==1.34.0
 # Image processing (для Mock и будущей модели)
 pillow==10.1.0
 trimesh==4.0.5
-numpy==1.24.3
+numpy>=1.24.3,<2.0.0
 scipy==1.11.4
 rembg==2.0.50
 onnxruntime==1.17.0
