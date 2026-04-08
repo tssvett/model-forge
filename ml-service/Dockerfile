@@ -48,9 +48,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # Layer 2: Torch (~800MB CPU / ~2GB GPU, changes VERY rarely)
 # Separate layer = cached forever until torch version bumps
 COPY requirements-torch-cpu.txt requirements-torch-gpu.txt ./
-RUN --mount=type=cache,target=/root/.cache/pip \
-    if [ "$MODE" = "cpu" ]; then pip install --prefix=/install -r requirements-torch-cpu.txt; \
-    elif [ "$MODE" = "gpu" ]; then pip install --prefix=/install -r requirements-torch-gpu.txt; fi
+RUN if [ "$MODE" = "cpu" ]; then pip install --no-cache-dir --prefix=/install -r requirements-torch-cpu.txt; \
+    elif [ "$MODE" = "gpu" ]; then pip install --no-cache-dir --prefix=/install -r requirements-torch-gpu.txt; fi
 
 # Layer 3: TripoSR + ML deps (changes rarely)
 # TripoSR has no setup.py/pyproject.toml — clone via git, add to PYTHONPATH.
