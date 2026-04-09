@@ -5,6 +5,7 @@ from .dataset import ShapeNetDataset, DatasetSplit, create_data_loaders
 from .losses import CombinedLoss, LossResult, chamfer_distance
 from .training import TripoSRTrainer, TrainingMetrics, Checkpoint
 from .weight_manager import WeightManager, ModelVersion, ModelRegistry
+from .evaluation import FinetuningEvaluator, EvaluationReport, SampleEvaluation
 
 __all__ = [
     "FinetuningConfig",
@@ -21,4 +22,7 @@ __all__ = [
     "WeightManager",
     "ModelVersion",
     "ModelRegistry",
+    "FinetuningEvaluator",
+    "EvaluationReport",
+    "SampleEvaluation",
 ]
