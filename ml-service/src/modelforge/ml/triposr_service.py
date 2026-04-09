@@ -22,6 +22,9 @@ class TripoSRService(ModelInferenceInterface):
     Loads the pretrained TripoSR model and generates a 3D mesh from a
     single image. Supports both CPU and CUDA devices.
 
+    Supports loading fine-tuned weights on top of the base model
+    via the `finetuned_weights_path` parameter.
+
     Pipeline:
       1. Background removal (rembg)
       2. Inference -> scene_codes
@@ -29,15 +32,23 @@ class TripoSRService(ModelInferenceInterface):
       4. Export OBJ/GLB + texture
     """
 
-    def __init__(self, device: str = "cpu", model_path: Optional[str] = None):
+    def __init__(
+        self,
+        device: str = "cpu",
+        model_path: Optional[str] = None,
+        finetuned_weights_path: Optional[str] = None,
+        model_version: str = "base",
+    ):
         self.device = device
         self.model_path = model_path
+        self.finetuned_weights_path = finetuned_weights_path
+        self.model_version = model_version
         self.model = None
         self._rembg_session = None
         self._load_model()
 
     def _load_model(self) -> None:
-        """Load the TripoSR model and initialize rembg session."""
+        """Load the TripoSR model, optionally applying fine-tuned weights."""
         try:
             import torch
             from tsr.system import TSR
@@ -54,7 +65,11 @@ class TripoSRService(ModelInferenceInterface):
             self.model.to(self.device)
 
             elapsed = time.monotonic() - start
-            logger.info("TripoSR model loaded in %.1fs on %s", elapsed, self.device)
+            logger.info("TripoSR base model loaded in %.1fs on %s", elapsed, self.device)
+
+            # Apply fine-tuned weights if specified
+            if self.finetuned_weights_path:
+                self._apply_finetuned_weights(torch)
 
         except ImportError as e:
             logger.error("TripoSR dependencies not installed: %s", e)
@@ -69,6 +84,64 @@ class TripoSRService(ModelInferenceInterface):
             logger.info("rembg session initialized for background removal")
         except ImportError:
             logger.warning("rembg not installed — background removal disabled")
+
+    def _apply_finetuned_weights(self, torch) -> None:
+        """Load fine-tuned weights on top of the base model."""
+        from pathlib import Path
+
+        weights_path = Path(self.finetuned_weights_path)
+
+        # Support both direct .pt file and directory containing model_weights.pt
+        if weights_path.is_dir():
+            weights_file = weights_path / "model_weights.pt"
+        else:
+            weights_file = weights_path
+
+        if not weights_file.exists():
+            logger.warning(
+                "Fine-tuned weights not found at %s, using base model",
+                weights_file,
+            )
+            return
+
+        try:
+            start = time.monotonic()
+            state_dict = torch.load(weights_file, map_location=self.device)
+            self.model.load_state_dict(state_dict, strict=False)
+            elapsed = time.monotonic() - start
+            logger.info(
+                "Fine-tuned weights loaded from %s in %.1fs (version=%s)",
+                weights_file,
+                elapsed,
+                self.model_version,
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to load fine-tuned weights from %s: %s. Using base model.",
+                weights_file,
+                e,
+            )
+
+    def reload_weights(self, finetuned_weights_path: Optional[str] = None, model_version: str = "base") -> bool:
+        """Reload the model with different weights at runtime.
+
+        Args:
+            finetuned_weights_path: Path to fine-tuned weights, or None for base model
+            model_version: Version identifier for metrics tracking
+
+        Returns:
+            True if reload succeeded
+        """
+        try:
+            import torch
+
+            self.finetuned_weights_path = finetuned_weights_path
+            self.model_version = model_version
+            self._load_model()
+            return True
+        except Exception as e:
+            logger.error("Failed to reload model weights: %s", e)
+            return False
 
     def is_available(self) -> bool:
         return self.model is not None
@@ -136,6 +209,8 @@ class TripoSRService(ModelInferenceInterface):
                 "faces": faces_count,
                 "background_removed": remove_bg and self._rembg_session is not None,
                 "mock_mode": False,
+                "model_version": self.model_version,
+                "is_finetuned": self.finetuned_weights_path is not None,
             }
 
             logger.info(

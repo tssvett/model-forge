@@ -4,6 +4,7 @@ from .config import FinetuningConfig, TrainingConfig
 from .dataset import ShapeNetDataset, DatasetSplit, create_data_loaders
 from .losses import CombinedLoss, LossResult, chamfer_distance
 from .training import TripoSRTrainer, TrainingMetrics, Checkpoint
+from .weight_manager import WeightManager, ModelVersion, ModelRegistry
 
 __all__ = [
     "FinetuningConfig",
@@ -17,4 +18,7 @@ __all__ = [
     "TripoSRTrainer",
     "TrainingMetrics",
     "Checkpoint",
+    "WeightManager",
+    "ModelVersion",
+    "ModelRegistry",
 ]

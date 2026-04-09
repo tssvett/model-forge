@@ -43,7 +43,21 @@ def create_inference_service(settings: Settings) -> ModelInferenceInterface:
 
         from .triposr_service import TripoSRService
 
-        return TripoSRService(device=device, model_path=settings.tripsr_model_path)
+        # Resolve fine-tuned weights path via weight manager
+        finetuned_weights_path = None
+        model_version = settings.model_version
+
+        if model_version != "base":
+            finetuned_weights_path = _resolve_finetuned_weights(
+                settings, model_version
+            )
+
+        return TripoSRService(
+            device=device,
+            model_path=settings.tripsr_model_path,
+            finetuned_weights_path=finetuned_weights_path,
+            model_version=model_version,
+        )
 
     except ImportError as e:
         logger.error("TripoSR dependencies not installed: %s", e)
@@ -53,3 +67,38 @@ def create_inference_service(settings: Settings) -> ModelInferenceInterface:
         logger.error("Failed to initialize TripoSR: %s", e)
         logger.warning("Falling back to MockInferenceService for stability.")
         return MockInferenceService()
+
+
+def _resolve_finetuned_weights(settings: Settings, model_version: str) -> str | None:
+    """Resolve the checkpoint path for a fine-tuned model version.
+
+    Uses the WeightManager to look up the registered checkpoint path.
+    Falls back to scanning the checkpoint directory if not registered.
+    """
+    from pathlib import Path
+    from ..finetuning.weight_manager import WeightManager
+
+    try:
+        checkpoint_dir = Path(settings.training_checkpoint_dir)
+        manager = WeightManager(
+            checkpoint_dir=checkpoint_dir,
+            s3_prefix=settings.checkpoint_s3_prefix,
+        )
+
+        path = manager.get_checkpoint_path(model_version)
+        if path:
+            logger.info(
+                "Resolved fine-tuned weights for version '%s': %s",
+                model_version, path,
+            )
+            return path
+
+        logger.warning(
+            "Model version '%s' not found in registry. Using base model.",
+            model_version,
+        )
+        return None
+
+    except Exception as e:
+        logger.error("Failed to resolve fine-tuned weights: %s", e)
+        return None
