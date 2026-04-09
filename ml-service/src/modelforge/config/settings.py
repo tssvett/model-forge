@@ -132,6 +132,16 @@ class Settings(BaseSettings):
         description="Weight for Laplacian smoothing loss"
     )
 
+    # === Weight Management ===
+    model_version: str = Field(
+        default="base",
+        description="Active model version: 'base' or a registered fine-tuned version ID"
+    )
+    checkpoint_s3_prefix: str = Field(
+        default="checkpoints/triposr",
+        description="S3 prefix for storing/loading model checkpoints"
+    )
+
     # === Experiment flags ===
     experiment_collect_metrics: bool = Field(
         default=True,
