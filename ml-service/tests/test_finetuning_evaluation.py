@@ -2,10 +2,12 @@
 
 import json
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 import trimesh
+from PIL import Image
 
 from modelforge.finetuning.config import FinetuningConfig
 from modelforge.finetuning.dataset import DataSample
@@ -361,3 +363,191 @@ class TestFinetuningEvaluator:
         assert report.improvements["iou_3d"] > 0
         assert report.improvements["f_score"] > 0
         assert report.improvements["normal_consistency"] > 0
+
+
+# === Model-Based Evaluation Tests ===
+
+
+def _make_mock_model():
+    """Create a mock TSR model that returns trimesh objects."""
+    model = MagicMock()
+
+    # model.parameters()
+    fake_param = MagicMock()
+    fake_param.numel.return_value = 1000
+    model.parameters.return_value = [fake_param]
+
+    # model([image], device=...) -> scene_codes
+    scene_code = MagicMock()
+    model.return_value = [scene_code]
+
+    # model.extract_mesh -> list of trimesh.Trimesh
+    tetra_verts = np.array(
+        [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32,
+    )
+    tetra_faces = np.array(
+        [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]], dtype=np.int64,
+    )
+    mock_mesh = trimesh.Trimesh(vertices=tetra_verts, faces=tetra_faces)
+    model.extract_mesh = MagicMock(return_value=[mock_mesh])
+
+    model.renderer = MagicMock()
+    model.renderer.set_chunk_size = MagicMock()
+    model.to.return_value = model
+    model.eval.return_value = model
+    model.train.return_value = model
+    model.state_dict.return_value = {}
+    model.load_state_dict = MagicMock()
+
+    return model
+
+
+class TestModelBasedEvaluation:
+    """Tests for evaluation with mock TripoSR model."""
+
+    @pytest.fixture
+    def mock_evaluator(self, ft_config):
+        """Create an evaluator with mock model injected."""
+        mock_torch = MagicMock()
+        mock_torch.no_grad.return_value.__enter__ = MagicMock(return_value=None)
+        mock_torch.no_grad.return_value.__exit__ = MagicMock(return_value=False)
+        mock_torch.load = MagicMock(return_value={})
+
+        evaluator = FinetuningEvaluator(
+            finetuning_config=ft_config,
+            num_surface_samples=500,
+            voxel_resolution=16,
+        )
+        evaluator._model = _make_mock_model()
+        evaluator._torch = mock_torch
+        return evaluator
+
+    def test_predict_mesh_returns_trimesh(self, mock_evaluator):
+        """_predict_mesh returns a trimesh when model is loaded."""
+        image = Image.new("RGB", (64, 64), color=(128, 128, 128))
+        mesh = mock_evaluator._predict_mesh(image)
+        assert isinstance(mesh, trimesh.Trimesh)
+        assert len(mesh.vertices) > 0
+
+    def test_predict_mesh_calls_model(self, mock_evaluator):
+        """_predict_mesh calls the model for inference."""
+        image = Image.new("RGB", (64, 64), color=(128, 128, 128))
+        mock_evaluator._predict_mesh(image)
+        assert mock_evaluator._model.called
+
+    def test_predict_mesh_calls_extract_mesh(self, mock_evaluator):
+        """_predict_mesh calls extract_mesh for mesh generation."""
+        image = Image.new("RGB", (64, 64), color=(128, 128, 128))
+        mock_evaluator._predict_mesh(image)
+        assert mock_evaluator._model.extract_mesh.called
+
+    def test_predict_mesh_returns_none_without_model(self, ft_config):
+        """_predict_mesh returns None when no model is loaded."""
+        evaluator = FinetuningEvaluator(finetuning_config=ft_config)
+        image = Image.new("RGB", (64, 64))
+        assert evaluator._predict_mesh(image) is None
+
+    def test_load_finetuned_weights(self, mock_evaluator, tmp_path):
+        """Fine-tuned weights can be loaded into the model."""
+        weights_path = tmp_path / "weights.pt"
+        weights_path.touch()
+        result = mock_evaluator._load_finetuned_weights(weights_path)
+        assert result is True
+        mock_evaluator._model.load_state_dict.assert_called()
+
+    def test_load_finetuned_weights_no_model(self, ft_config, tmp_path):
+        """Loading weights without model returns False."""
+        evaluator = FinetuningEvaluator(finetuning_config=ft_config)
+        weights_path = tmp_path / "weights.pt"
+        weights_path.touch()
+        assert evaluator._load_finetuned_weights(weights_path) is False
+
+    def test_evaluate_from_test_split_with_model(self, mock_evaluator, tmp_path):
+        """evaluate_from_test_split uses model inference when available."""
+        # Create minimal dataset
+        cat_dir = tmp_path / "chair" / "model_000"
+        images_dir = cat_dir / "images"
+        images_dir.mkdir(parents=True)
+        Image.new("RGB", (64, 64), color=(100, 150, 200)).save(images_dir / "000.png")
+        with open(cat_dir / "model.obj", "w") as f:
+            f.write("v 0.0 0.0 0.0\nv 1.0 0.0 0.0\nv 0.0 1.0 0.0\nv 0.0 0.0 1.0\n")
+            f.write("f 1 2 3\nf 1 2 4\nf 1 3 4\nf 2 3 4\n")
+
+        mock_evaluator.ft_config = FinetuningConfig(
+            dataset_root=tmp_path,
+            train_ratio=0.0,
+            val_ratio=0.0,
+            test_ratio=1.0,
+            seed=42,
+        )
+
+        report = mock_evaluator.evaluate_from_test_split()
+
+        assert report.num_samples > 0
+        assert mock_evaluator._model.called
+
+    def test_evaluate_from_test_split_with_finetuned_weights(
+        self, mock_evaluator, tmp_path,
+    ):
+        """evaluate_from_test_split loads fine-tuned weights when path provided."""
+        # Create minimal dataset
+        cat_dir = tmp_path / "chair" / "model_000"
+        images_dir = cat_dir / "images"
+        images_dir.mkdir(parents=True)
+        Image.new("RGB", (64, 64), color=(100, 150, 200)).save(images_dir / "000.png")
+        with open(cat_dir / "model.obj", "w") as f:
+            f.write("v 0.0 0.0 0.0\nv 1.0 0.0 0.0\nv 0.0 1.0 0.0\nv 0.0 0.0 1.0\n")
+            f.write("f 1 2 3\nf 1 2 4\nf 1 3 4\nf 2 3 4\n")
+
+        weights_path = tmp_path / "model_weights.pt"
+        weights_path.touch()
+
+        mock_evaluator.ft_config = FinetuningConfig(
+            dataset_root=tmp_path,
+            train_ratio=0.0,
+            val_ratio=0.0,
+            test_ratio=1.0,
+            seed=42,
+        )
+
+        report = mock_evaluator.evaluate_from_test_split(
+            finetuned_weights_path=weights_path,
+        )
+
+        assert report.num_samples > 0
+        # Model should have been called for both base and fine-tuned inference
+        assert mock_evaluator._model.call_count >= 2
+        # Weights should have been loaded
+        mock_evaluator._model.load_state_dict.assert_called()
+
+    def test_simulation_fallback_without_model(self, tmp_path):
+        """Without model, evaluate_from_test_split falls back to simulation."""
+        # Create minimal dataset
+        cat_dir = tmp_path / "chair" / "model_000"
+        images_dir = cat_dir / "images"
+        images_dir.mkdir(parents=True)
+        Image.new("RGB", (64, 64), color=(100, 150, 200)).save(images_dir / "000.png")
+        with open(cat_dir / "model.obj", "w") as f:
+            f.write("v 0.0 0.0 0.0\nv 1.0 0.0 0.0\nv 0.0 1.0 0.0\nv 0.0 0.0 1.0\n")
+            f.write("f 1 2 3\nf 1 2 4\nf 1 3 4\nf 2 3 4\n")
+
+        ft_config = FinetuningConfig(
+            dataset_root=tmp_path,
+            train_ratio=0.0,
+            val_ratio=0.0,
+            test_ratio=1.0,
+            seed=42,
+        )
+        evaluator = FinetuningEvaluator(
+            finetuning_config=ft_config,
+            num_surface_samples=500,
+            voxel_resolution=16,
+        )
+
+        report = evaluator.evaluate_from_test_split()
+
+        assert report.num_samples > 0
+        assert report.num_evaluated > 0
+        # Both model versions should have metrics
+        assert len(report.base_mean_metrics) > 0
+        assert len(report.finetuned_mean_metrics) > 0
