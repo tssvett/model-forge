@@ -79,6 +79,9 @@
     Space / L. Mescheder, M. Oechsle, M. Niemeyer [et al.] // Proceedings of
     the IEEE/CVF Conference on Computer Vision and Pattern Recognition
     (CVPR). – 2019. – P. 4460–4470.
+
+16. Bass, L. Software Architecture in Practice / L. Bass, P. Clements,
+    R. Kazman. – 4th ed. – Boston : Addison-Wesley, 2021. – 464 p.
 ```
 
 ---
