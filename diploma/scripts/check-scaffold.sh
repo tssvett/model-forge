@@ -7,11 +7,11 @@ cd "$(dirname "$0")/../.."
 
 echo "=== 1. Branch check ==="
 BRANCH=$(git branch --show-current)
-if [ "$BRANCH" != "diploma/main" ]; then
-  echo "  FAIL: expected diploma/main, got $BRANCH"
+if [ "$BRANCH" != "master" ]; then
+  echo "  FAIL: expected master, got $BRANCH"
   exit 1
 fi
-echo "  OK: on diploma/main"
+echo "  OK: on master"
 
 echo ""
 echo "=== 2. Required files ==="

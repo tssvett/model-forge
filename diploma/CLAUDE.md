@@ -165,7 +165,7 @@ Closes <bd-id>. Word count: ~<N>.
 ### Шаг 11. Push
 
 ```bash
-git push origin diploma/main
+git push origin master
 bd dolt push  # если настроен Dolt-remote, иначе пропустить
 ```
 
@@ -185,7 +185,7 @@ bd dolt push  # если настроен Dolt-remote, иначе пропуст
 6. **Не открывай PR.** Пользователь сделает merge сам, если решит.
 7. **Не задавай вопросов** если ты в scheduled-режиме (определяется по wake-up-prompt). Действуй автономно по этому файлу.
 8. **Один beads-id за коммит.** Закрой ровно одну задачу, упомяни её в commit message.
-9. **Branch:** работай только на `diploma/main`. Если оказался на другой ветке — `git checkout diploma/main` и продолжай.
+9. **Branch:** работай только на `master`. Если оказался на другой ветке — `git checkout master` и продолжай.
 
 ## 5. Recovery после краша
 
@@ -230,7 +230,7 @@ bd dolt push                             # Синк state в Dolt-remote
 Если:
 - `bd ready --label vkr` пуст,
 - или все задачи в `in_progress` имеют другого assignee,
-- или текущая ветка не `diploma/main`,
+- или текущая ветка не `master`,
 - или есть незакоммиченные изменения вне `diploma/`,
 
 → **Выходи без коммита.** Это не ошибка. Пользователь разберётся.
