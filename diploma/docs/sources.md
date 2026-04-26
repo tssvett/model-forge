@@ -43,6 +43,28 @@
    [Электронный ресурс] / D. Tochilkin, D. Pankratz, Z. Liu [et al.]. –
    arXiv preprint arXiv:2403.02151, 2024. –
    URL : https://arxiv.org/abs/2403.02151
+
+8. Schönberger, J.L. Structure-from-Motion Revisited / J.L. Schönberger,
+   J.-M. Frahm // Proceedings of the IEEE Conference on Computer Vision and
+   Pattern Recognition (CVPR). – 2016. – P. 4104–4113.
+
+9. Xie, H. Pix2Vox++: Multi-scale Context-aware 3D Object Reconstruction
+   from Single and Multiple Images / H. Xie, H. Yao, S. Zhang [et al.] //
+   International Journal of Computer Vision. – 2020. – Vol. 128, № 12. –
+   P. 2919–2935.
+
+10. Poole, B. DreamFusion: Text-to-3D using 2D Diffusion [Электронный ресурс] /
+    B. Poole, A. Jain, J.T. Barron, B. Mildenhall. – arXiv preprint
+    arXiv:2209.14988, 2022. – URL : https://arxiv.org/abs/2209.14988
+
+11. Lin, C.-H. Magic3D: High-Resolution Text-to-3D Content Creation /
+    C.-H. Lin, J. Gao, L. Tang [et al.] // Proceedings of the IEEE/CVF
+    Conference on Computer Vision and Pattern Recognition (CVPR). – 2023. –
+    P. 300–309.
+
+12. Hong, Y. LRM: Large Reconstruction Model for Single Image to 3D
+    [Электронный ресурс] / Y. Hong, K. Zhang, J. Gu [et al.]. – arXiv
+    preprint arXiv:2311.04400, 2023. – URL : https://arxiv.org/abs/2311.04400
 ```
 
 ---
