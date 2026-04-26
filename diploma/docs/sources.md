@@ -140,6 +140,19 @@
 30. Qin, X. U²-Net: Going Deeper with Nested U-Structure for Salient Object
     Detection / X. Qin, Z. Zhang, C. Huang [et al.] // Pattern Recognition. –
     2020. – Vol. 106. – Article 107404.
+
+31. Loshchilov, I. Decoupled Weight Decay Regularization [Электронный
+    ресурс] / I. Loshchilov, F. Hutter. – arXiv preprint arXiv:1711.05101,
+    2019. – URL : https://arxiv.org/abs/1711.05101
+
+32. Johnson, J. Perceptual Losses for Real-Time Style Transfer and
+    Super-Resolution / J. Johnson, A. Alahi, L. Fei-Fei // Proceedings of
+    the European Conference on Computer Vision (ECCV). – 2016. –
+    P. 694–711.
+
+33. Micikevicius, P. Mixed Precision Training [Электронный ресурс] /
+    P. Micikevicius, S. Narang, J. Alben [et al.]. – arXiv preprint
+    arXiv:1710.03740, 2018. – URL : https://arxiv.org/abs/1710.03740
 ```
 
 ---
