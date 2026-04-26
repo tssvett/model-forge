@@ -65,6 +65,20 @@
 12. Hong, Y. LRM: Large Reconstruction Model for Single Image to 3D
     [Электронный ресурс] / Y. Hong, K. Zhang, J. Gu [et al.]. – arXiv
     preprint arXiv:2311.04400, 2023. – URL : https://arxiv.org/abs/2311.04400
+
+13. Fan, H. A Point Set Generation Network for 3D Object Reconstruction from
+    a Single Image / H. Fan, H. Su, L.J. Guibas // Proceedings of the IEEE
+    Conference on Computer Vision and Pattern Recognition (CVPR). – 2017. –
+    P. 605–613.
+
+14. Knapitsch, A. Tanks and Temples: Benchmarking Large-Scale Scene
+    Reconstruction / A. Knapitsch, J. Park, Q.-Y. Zhou, V. Koltun // ACM
+    Transactions on Graphics. – 2017. – Vol. 36, № 4. – Article 78. – P. 1–13.
+
+15. Mescheder, L. Occupancy Networks: Learning 3D Reconstruction in Function
+    Space / L. Mescheder, M. Oechsle, M. Niemeyer [et al.] // Proceedings of
+    the IEEE/CVF Conference on Computer Vision and Pattern Recognition
+    (CVPR). – 2019. – P. 4460–4470.
 ```
 
 ---
