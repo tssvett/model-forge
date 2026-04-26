@@ -3,6 +3,7 @@
 *.pdf
 !source-materials/**/*.pdf
 !source-materials/**/*.docx
+!template/*.docx
 
 # Temporary files
 *.tmp
