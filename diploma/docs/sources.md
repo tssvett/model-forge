@@ -87,6 +87,17 @@
     программная инженерия. Требования и оценка качества систем и
     программного обеспечения (SQuaRE). Модели качества систем и программных
     продуктов. – М. : Стандартинформ, 2015. – 36 с.
+
+18. Newman, S. Building Microservices: Designing Fine-Grained Systems /
+    S. Newman. – 2nd ed. – Sebastopol : O'Reilly Media, 2021. – 612 p.
+
+19. Richardson, C. Microservices Patterns: With Examples in Java /
+    C. Richardson. – Shelter Island : Manning, 2018. – 520 p.
+
+20. Fowler, M. Microservices [Электронный ресурс] / M. Fowler, J. Lewis. –
+    Электрон. дан. – 2014. –
+    URL : https://martinfowler.com/articles/microservices.html
+    (дата обращения: 26.04.2026).
 ```
 
 ---
