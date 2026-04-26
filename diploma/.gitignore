@@ -1,0 +1,21 @@
+# Generated artifacts (final compilation step)
+*.docx
+*.pdf
+!source-materials/**/*.pdf
+!source-materials/**/*.docx
+
+# Temporary files
+*.tmp
+*.bak
+*~
+.DS_Store
+
+# OCR/pre-processing scratch
+**/_pages/
+**/_ocr/
+**/_temp/
+
+# Editor leftovers
+.vscode/
+.idea/
+*.swp

@@ -65,6 +65,28 @@ diploma/
 
 Этап 3 (день 17-20): сборка markdown в .docx через Pandoc с шаблоном по СТО СГАУ. Скрипт сборки — TBD (`scripts/make-pdf.sh`).
 
+## Полезные команды
+
+```bash
+# Проверить готовность пайплайна (запускать перед автономным запуском):
+bash diploma/scripts/check-scaffold.sh
+
+# Что агент возьмёт следующим:
+bd ready --label vkr --json | python -c "import json,sys; d=sorted(json.loads(sys.stdin.read()), key=lambda x:(x['priority'],x['created_at'])); print(f'{d[0][\"id\"]}: {d[0][\"title\"]}' if d else 'nothing ready')"
+
+# Дерево задач диплома (визуализация):
+bd dep tree mf-ws9
+
+# Зарегистрировать ежевечернюю задачу в Task Scheduler (PowerShell):
+powershell -ExecutionPolicy Bypass -File diploma/scripts/register-task-scheduler.ps1
+
+# Прогон задачи прямо сейчас для проверки:
+powershell -Command "Start-ScheduledTask -TaskName 'Diploma Auto-Write'"
+
+# Что было закоммичено за сегодня в diploma/:
+git log --oneline diploma/main -- diploma/
+```
+
 ## Лицензия
 
 Содержимое папки `source-materials/` — авторские материалы университета и пользователя, не для распространения. Текстовое содержимое работы — © Жиляев М.И., 2026.

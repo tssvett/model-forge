@@ -42,13 +42,34 @@ bd list --status in_progress --label vkr --json
 
 ### Шаг 3. Найти следующую задачу
 
+**Важно:** у `bd ready` дефолтный лимит 10 — обязательно явно передавай `--limit 100`. Эпик нужно отфильтровать (он не задача для написания).
+
 ```bash
-bd ready --label vkr --json
+NEXT_ID=$(bd ready --label vkr --limit 100 --json | python -c "
+import json, sys
+d = json.loads(sys.stdin.read())
+# Отфильтровать эпик и любой не-task
+d = [x for x in d if x['issue_type'] == 'task']
+# Сортировать: меньший priority = выше, потом по created_at ASC (старшая раньше)
+d.sort(key=lambda x: (x['priority'], x['created_at']))
+print(d[0]['id'] if d else '')
+")
+echo "NEXT: $NEXT_ID"
 ```
 
-Возьми **первую** запись в результате. Это задача с наивысшим приоритетом без блокеров.
+Это вернёт **самую старшую task-задачу с наименьшим приоритетом-числом** (P1 раньше P2). Логически — секция 1.1 раньше 1.2, глава 1 раньше главы 2 (мы создавали задачи в правильной последовательности).
 
-Если результат пустой → значит весь скелет диплома закрыт (или все оставшиеся заблокированы). Ничего не пиши, сделай commit пустой "проверка автомата" не нужно. Просто выйди с информационным echo.
+Если `$NEXT_ID` пуст → значит весь скелет диплома закрыт. Ничего не пиши, просто выйди. Никаких "пустых" коммитов.
+
+Альтернативно для отладки (показать топ-5):
+```bash
+bd ready --label vkr --limit 100 --json | python -c "
+import json, sys
+d = [x for x in json.loads(sys.stdin.read()) if x['issue_type']=='task']
+d.sort(key=lambda x:(x['priority'], x['created_at']))
+[print(f'{i[\"id\"]} P{i[\"priority\"]} {i[\"title\"][:60]}') for i in d[:5]]
+"
+```
 
 ### Шаг 4. Claim задачи
 
