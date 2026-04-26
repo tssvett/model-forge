@@ -122,6 +122,24 @@
 26. Wiggins, A. The Twelve-Factor App [Электронный ресурс] / A. Wiggins. –
     2017. – URL : https://12factor.net/
     (дата обращения: 26.04.2026).
+
+27. Chang, A.X. ShapeNet: An Information-Rich 3D Model Repository
+    [Электронный ресурс] / A.X. Chang, T. Funkhouser, L. Guibas [et al.]. –
+    arXiv preprint arXiv:1512.03012, 2015. –
+    URL : https://arxiv.org/abs/1512.03012
+
+28. Yosinski, J. How Transferable Are Features in Deep Neural Networks? /
+    J. Yosinski, J. Clune, Y. Bengio, H. Lipson // Advances in Neural
+    Information Processing Systems (NeurIPS). – 2014. – Vol. 27. –
+    P. 3320–3328.
+
+29. Deitke, M. Objaverse: A Universe of Annotated 3D Objects [Электронный
+    ресурс] / M. Deitke, D. Schwenk, J. Salvador [et al.]. – arXiv preprint
+    arXiv:2212.08051, 2022. – URL : https://arxiv.org/abs/2212.08051
+
+30. Qin, X. U²-Net: Going Deeper with Nested U-Structure for Salient Object
+    Detection / X. Qin, Z. Zhang, C. Huang [et al.] // Pattern Recognition. –
+    2020. – Vol. 106. – Article 107404.
 ```
 
 ---
