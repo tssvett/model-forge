@@ -153,6 +153,10 @@
 33. Micikevicius, P. Mixed Precision Training [Электронный ресурс] /
     P. Micikevicius, S. Narang, J. Alben [et al.]. – arXiv preprint
     arXiv:1710.03740, 2018. – URL : https://arxiv.org/abs/1710.03740
+
+34. k6 Documentation [Электронный ресурс]. – Grafana Labs, 2024. –
+    URL : https://k6.io/docs/
+    (дата обращения: 27.04.2026).
 ```
 
 ---
