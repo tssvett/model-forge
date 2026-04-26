@@ -24,6 +24,25 @@
 3. ГОСТ Р 7.0.5-2008. Система стандартов по информации, библиотечному и издательскому делу.
    Библиографическая ссылка. Общие требования и правила составления. – М. :
    Стандартинформ, 2008. – 23 с.
+
+4. Han, X.-F. Image-based 3D Object Reconstruction: State-of-the-Art and Trends in
+   the Deep Learning Era / X.-F. Han, H. Laga, M. Bennamoun // IEEE Transactions on
+   Pattern Analysis and Machine Intelligence. – 2019. – Vol. 43, № 5. – P. 1578–1604.
+
+5. Mildenhall, B. NeRF: Representing Scenes as Neural Radiance Fields for View
+   Synthesis [Электронный ресурс] / B. Mildenhall, P.P. Srinivasan, M. Tancik
+   [et al.]. – arXiv preprint arXiv:2003.08934, 2020. –
+   URL : https://arxiv.org/abs/2003.08934
+
+6. Tatarchenko, M. What Do Single-view 3D Reconstruction Networks Learn? /
+   M. Tatarchenko, S.R. Richter, R. Ranftl [et al.] // Proceedings of the IEEE/CVF
+   Conference on Computer Vision and Pattern Recognition (CVPR). – 2019. –
+   P. 3405–3414.
+
+7. Tochilkin, D. TripoSR: Fast 3D Object Reconstruction from a Single Image
+   [Электронный ресурс] / D. Tochilkin, D. Pankratz, Z. Liu [et al.]. –
+   arXiv preprint arXiv:2403.02151, 2024. –
+   URL : https://arxiv.org/abs/2403.02151
 ```
 
 ---
