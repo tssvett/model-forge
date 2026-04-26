@@ -102,6 +102,26 @@
 21. Kleppmann, M. Designing Data-Intensive Applications: The Big Ideas Behind
     Reliable, Scalable, and Maintainable Systems / M. Kleppmann. – Sebastopol :
     O'Reilly Media, 2017. – 590 p.
+
+22. Docker Documentation [Электронный ресурс]. – Docker Inc., 2024. –
+    URL : https://docs.docker.com/
+    (дата обращения: 26.04.2026).
+
+23. Grafana Loki Documentation [Электронный ресурс]. – Grafana Labs, 2024. –
+    URL : https://grafana.com/docs/loki/latest/
+    (дата обращения: 26.04.2026).
+
+24. Prometheus Documentation [Электронный ресурс]. – Prometheus Authors,
+    2024. – URL : https://prometheus.io/docs/
+    (дата обращения: 26.04.2026).
+
+25. Grafana Documentation [Электронный ресурс]. – Grafana Labs, 2024. –
+    URL : https://grafana.com/docs/grafana/latest/
+    (дата обращения: 26.04.2026).
+
+26. Wiggins, A. The Twelve-Factor App [Электронный ресурс] / A. Wiggins. –
+    2017. – URL : https://12factor.net/
+    (дата обращения: 26.04.2026).
 ```
 
 ---
