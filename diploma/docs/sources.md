@@ -98,6 +98,10 @@
     Электрон. дан. – 2014. –
     URL : https://martinfowler.com/articles/microservices.html
     (дата обращения: 26.04.2026).
+
+21. Kleppmann, M. Designing Data-Intensive Applications: The Big Ideas Behind
+    Reliable, Scalable, and Maintainable Systems / M. Kleppmann. – Sebastopol :
+    O'Reilly Media, 2017. – 590 p.
 ```
 
 ---
