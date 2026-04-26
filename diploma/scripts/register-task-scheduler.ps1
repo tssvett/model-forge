@@ -1,46 +1,44 @@
-# Регистрирует ежевечернюю задачу в Windows Task Scheduler для автономного написания ВКР.
-# Запускать ОДИН РАЗ от обычного пользователя (не админ — задача будет в его контексте).
+# Registers a daily scheduled task for autonomous diploma writing.
+# Run ONCE from your normal user account (not admin - task runs in user context).
 #
-# Что делает:
-# - Создаёт задачу с триггером 22:00 ежедневно
-# - Action: запускает claude CLI с wake-up-prompt.txt из этого репо
+# What it does:
+# - Daily trigger at 22:00
+# - Action: launches claude CLI with diploma/scripts/wake-up-prompt.txt
 # - Working dir: D:\model-forge
-# - Если ноут спал в 22:00 — задача запустится при следующем включении (StartWhenAvailable)
+# - StartWhenAvailable: if PC slept at 22:00, runs at next wake
 #
-# Как удалить задачу:
+# To remove later:
 #   Unregister-ScheduledTask -TaskName "Diploma Auto-Write" -Confirm:$false
 
 param(
   [string]$RepoPath = "D:\model-forge",
   [string]$TaskName = "Diploma Auto-Write",
   [string]$Time     = "22:00",
-  [string]$ClaudeExe = "$env:LOCALAPPDATA\AnthropicClaude\Claude.exe"
-  # ↑ актуальный путь к claude CLI на твоей машине. Уточни через `where claude` если другой.
+  [string]$ClaudeExe = "D:\node-v24.14.0-win-x64\claude.cmd"
 )
 
 $WakeUpPrompt = Join-Path $RepoPath "diploma\scripts\wake-up-prompt.txt"
 
 if (-not (Test-Path $WakeUpPrompt)) {
-  Write-Error "Не найден wake-up prompt: $WakeUpPrompt"
+  Write-Error "Wake-up prompt not found: $WakeUpPrompt"
   exit 1
 }
 
 if (-not (Test-Path $ClaudeExe)) {
-  Write-Warning "Claude CLI не найден по пути $ClaudeExe — задача будет создана, но возможно потребует правки Action.Path."
+  Write-Warning "Claude CLI not found at $ClaudeExe - task will be created but may need fixing."
 }
 
-# Команда: cmd.exe запускает claude с promptом из файла, в нужной рабочей директории.
-# Используем PowerShell-обёртку для надёжности кодировки UTF-8 prompt-файла на Windows.
+# PowerShell wrapper reads UTF-8 prompt file and pipes to claude CLI.
+$PSCommand = "`$prompt = Get-Content -Raw -Encoding UTF8 '$WakeUpPrompt'; & '$ClaudeExe' --dangerously-skip-permissions -p `$prompt"
+
 $Action = New-ScheduledTaskAction `
   -Execute "powershell.exe" `
-  -Argument "-NoProfile -ExecutionPolicy Bypass -Command `"`$prompt = Get-Content -Raw -Encoding UTF8 '$WakeUpPrompt'; & '$ClaudeExe' --dangerously-skip-permissions -p `$prompt`"" `
+  -Argument "-NoProfile -ExecutionPolicy Bypass -Command `"$PSCommand`"" `
   -WorkingDirectory $RepoPath
 
-# Триггер: ежедневно в 22:00, с включённым "запустить если пропустили"
+# Daily at $Time, with "run on next available time if missed" semantics
 $Trigger = New-ScheduledTaskTrigger -Daily -At $Time
-$Trigger.StartBoundary = ([datetime]::Today.AddHours(22)).ToString("yyyy-MM-ddTHH:mm:ss")
 
-# Settings: запускать если пропустили, не блокировать на network/idle, лимит 30 минут
 $Settings = New-ScheduledTaskSettingsSet `
   -StartWhenAvailable `
   -DontStopOnIdleEnd `
@@ -48,24 +46,23 @@ $Settings = New-ScheduledTaskSettingsSet `
   -RestartCount 1 `
   -RestartInterval (New-TimeSpan -Minutes 5)
 
-# Регистрация
 Register-ScheduledTask `
   -TaskName $TaskName `
   -Action $Action `
   -Trigger $Trigger `
   -Settings $Settings `
-  -Description "Автономное написание ВКР: каждый вечер пишет одну секцию диплома и делает атомарный коммит. Подробности: $RepoPath\diploma\CLAUDE.md" `
+  -Description "Autonomous diploma writing - one section per evening, atomic commit. See $RepoPath\diploma\CLAUDE.md" `
   -Force
 
 Write-Host ""
-Write-Host "Задача '$TaskName' зарегистрирована."
-Write-Host "Триггер: ежедневно в $Time."
+Write-Host "Task '$TaskName' registered successfully."
+Write-Host "Daily trigger at $Time."
 Write-Host ""
-Write-Host "Чтобы прогнать прямо сейчас (для проверки):"
+Write-Host "To run NOW (manual test):"
 Write-Host "  Start-ScheduledTask -TaskName '$TaskName'"
 Write-Host ""
-Write-Host "Чтобы посмотреть статус:"
+Write-Host "To check status:"
 Write-Host "  Get-ScheduledTaskInfo -TaskName '$TaskName'"
 Write-Host ""
-Write-Host "Чтобы удалить:"
+Write-Host "To remove:"
 Write-Host "  Unregister-ScheduledTask -TaskName '$TaskName' -Confirm:`$false"
