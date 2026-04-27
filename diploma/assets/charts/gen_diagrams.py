@@ -60,64 +60,197 @@ def _arrow(ax, p1, p2, label=None, style="-|>", linestyle="-",
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# Рисунок 1 – Компонентная диаграмма платформы model-forge
+# Рисунок 1 – Компонентная диаграмма платформы model-forge (main-flow)
+# Только бизнес-стрелки: React → Kotlin → Kafka → ML → Storage.
+# Слой наблюдаемости вынесен в отдельную диаграмму (Рисунок 13).
 # ──────────────────────────────────────────────────────────────────────────
 def fig1_architecture():
-    fig, ax = plt.subplots(figsize=(10.5, 6.6), dpi=DPI)
-    ax.set_xlim(0, 17)
-    ax.set_ylim(0, 11)
+    fig, ax = plt.subplots(figsize=(13.5, 6.5), dpi=DPI)
+    ax.set_xlim(0, 22)
+    ax.set_ylim(0, 10)
     ax.axis("off")
 
-    # верхняя строка: FE → API
-    fe = _box(ax, 0.5, 7.5, 3.0, 1.6, "React SPA\n(frontend)", fc=C_FE, weight="bold")
-    api = _box(ax, 4.5, 7.5, 3.0, 1.6, "Kotlin\nSpring Boot\n(api-service)", fc=C_API, weight="bold")
-    # средняя: Kafka
-    kafka = _box(ax, 8.5, 7.5, 3.0, 1.6, "Apache Kafka\ntopics:\ntasks, results", fc=C_KAFKA, weight="bold")
-    # справа сверху: ML
-    ml = _box(ax, 12.5, 7.5, 3.5, 1.6, "Python ML Worker\n(TripoSR)", fc=C_ML, weight="bold")
+    # верхний ряд: FE → API → Kafka → ML
+    BW, BH = 4.0, 2.0
+    GAP = 1.4
+    Y_TOP = 6.6
+    fe_x = 0.6
+    api_x = fe_x + BW + GAP
+    k_x = api_x + BW + GAP
+    ml_x = k_x + BW + GAP
 
-    # хранилища (нижний ряд)
-    pg = _box(ax, 4.5, 4.5, 3.0, 1.4, "PostgreSQL\n(tasks, users)", fc=C_DB)
-    s3 = _box(ax, 8.5, 4.5, 3.0, 1.4, "MinIO (S3)\ninput/, output/", fc=C_DB)
+    _box(ax, fe_x, Y_TOP, BW, BH, "React SPA\n(frontend)",
+         fc=C_FE, weight="bold", fontsize=13)
+    _box(ax, api_x, Y_TOP, BW, BH, "Kotlin Spring Boot\n(api-service)",
+         fc=C_API, weight="bold", fontsize=13)
+    _box(ax, k_x, Y_TOP, BW, BH, "Apache Kafka\ntopics: tasks, results",
+         fc=C_KAFKA, weight="bold", fontsize=13)
+    _box(ax, ml_x, Y_TOP, BW, BH, "Python ML Worker\n(TripoSR)",
+         fc=C_ML, weight="bold", fontsize=13)
 
-    # observability (нижний ряд)
-    loki = _box(ax, 1.0, 1.5, 2.5, 1.2, "Loki\n+ Promtail", fc=C_OBS)
-    prom = _box(ax, 4.5, 1.5, 2.5, 1.2, "Prometheus", fc=C_OBS)
-    graf = _box(ax, 8.5, 1.5, 2.5, 1.2, "Grafana", fc=C_OBS)
+    # нижний ряд: хранилища под API и под Kafka/ML
+    Y_BOT = 1.4
+    pg_x = api_x
+    s3_x = (k_x + ml_x) / 2
+    _box(ax, pg_x, Y_BOT, BW, 1.7, "PostgreSQL\n(tasks, users)",
+         fc=C_DB, fontsize=12)
+    _box(ax, s3_x, Y_BOT, BW, 1.7, "MinIO (S3)\ninput/, output/",
+         fc=C_DB, fontsize=12)
 
-    # стрелки
-    _arrow(ax, fe, api, "HTTPS / REST", fontsize=8)
-    _arrow(ax, api, kafka, "produce", fontsize=8)
-    _arrow(ax, kafka, ml, "consume", fontsize=8)
-    _arrow(ax, ml, kafka, "results", fontsize=8, rad=-0.25)
-    _arrow(ax, kafka, api, "consume\nresults", fontsize=8, rad=-0.25)
-    _arrow(ax, api, pg, "JDBC", fontsize=8)
-    _arrow(ax, api, s3, "S3 API", fontsize=8, rad=0.15)
-    _arrow(ax, ml, s3, "S3 API", fontsize=8, rad=-0.15)
-    # observability — пунктир
-    _arrow(ax, api, prom, "metrics", linestyle=":", fontsize=8, rad=-0.2)
-    _arrow(ax, ml, prom, "metrics", linestyle=":", fontsize=8, rad=-0.3)
-    _arrow(ax, api, loki, "logs", linestyle=":", fontsize=8, rad=0.2)
-    _arrow(ax, ml, loki, "logs", linestyle=":", fontsize=8, rad=0.4)
-    _arrow(ax, prom, graf, fontsize=8)
-    _arrow(ax, loki, graf, fontsize=8, rad=-0.15)
+    # ── вспомогательные функции для прямых стрелок ──────────────────────
+    def harrow(x1, x2, y, label, label_above=True, fontsize=10):
+        arr = FancyArrowPatch(
+            (x1, y), (x2, y), arrowstyle="-|>", mutation_scale=14,
+            linewidth=1.4, color=C_BORDER,
+        )
+        ax.add_patch(arr)
+        mx = (x1 + x2) / 2
+        offset = 0.22 if label_above else -0.32
+        ax.text(mx, y + offset, label, fontsize=fontsize, ha="center",
+                va="bottom" if label_above else "top",
+                bbox=dict(facecolor="white", edgecolor="none", pad=1.0, alpha=0.9))
 
-    # пунктирные группировки слоёв
-    for x0, x1, y0, y1, lab in [
-        (0.3, 3.7, 7.2, 9.3, "Клиент"),
-        (4.3, 7.7, 7.2, 9.3, "API"),
-        (8.3, 11.7, 7.2, 9.3, "Шина"),
-        (12.3, 16.2, 7.2, 9.3, "Worker"),
-        (4.3, 11.7, 4.2, 6.1, "Хранилища"),
-        (0.7, 11.2, 1.2, 2.9, "Наблюдаемость"),
-    ]:
-        ax.add_patch(mpatches.Rectangle(
-            (x0, y0), x1 - x0, y1 - y0,
-            fill=False, edgecolor="#90A4AE", linestyle="--", linewidth=0.8,
-        ))
-        ax.text(x0 + 0.1, y1 - 0.18, lab, fontsize=7.5, color="#546E7A", style="italic")
+    def varrow(x, y1, y2, label, label_right=True, fontsize=10):
+        arr = FancyArrowPatch(
+            (x, y1), (x, y2), arrowstyle="-|>", mutation_scale=14,
+            linewidth=1.4, color=C_BORDER,
+        )
+        ax.add_patch(arr)
+        my = (y1 + y2) / 2
+        ha = "left" if label_right else "right"
+        offset = 0.18 if label_right else -0.18
+        ax.text(x + offset, my, label, fontsize=fontsize, ha=ha, va="center",
+                bbox=dict(facecolor="white", edgecolor="none", pad=1.0, alpha=0.9))
+
+    # горизонтальные стрелки в верхнем ряду — пары противоположных направлений
+    # FE → API (один поток, по центру)
+    harrow(fe_x + BW, api_x, Y_TOP + BH / 2, "HTTPS / REST", fontsize=11)
+
+    # API ↔ Kafka: produce (верх), consume results (низ)
+    harrow(api_x + BW, k_x, Y_TOP + BH * 0.72, "produce", fontsize=11)
+    harrow(k_x, api_x + BW, Y_TOP + BH * 0.28, "consume results",
+           label_above=False, fontsize=11)
+
+    # Kafka ↔ ML: consume (верх), results (низ)
+    harrow(k_x + BW, ml_x, Y_TOP + BH * 0.72, "consume", fontsize=11)
+    harrow(ml_x, k_x + BW, Y_TOP + BH * 0.28, "results",
+           label_above=False, fontsize=11)
+
+    # вертикальные стрелки к хранилищам — все ПРЯМО ВНИЗ из своих боксов
+    # API → PostgreSQL (левая часть API-бокса)
+    varrow(api_x + BW * 0.30, Y_TOP, Y_BOT + 1.7, "JDBC", fontsize=11)
+    # API → MinIO (правая часть API-бокса, диагональ к левой части S3-бокса)
+    p1 = (api_x + BW * 0.80, Y_TOP)
+    p2 = (s3_x + BW * 0.25, Y_BOT + 1.7)
+    arr = FancyArrowPatch(p1, p2, arrowstyle="-|>", mutation_scale=14,
+                          linewidth=1.4, color=C_BORDER)
+    ax.add_patch(arr)
+    ax.text((p1[0] + p2[0]) / 2 + 0.15, (p1[1] + p2[1]) / 2 + 0.05,
+            "S3 API", fontsize=11, ha="left", va="center",
+            bbox=dict(facecolor="white", edgecolor="none", pad=1.2, alpha=0.9))
+    # ML → MinIO (центр ML-бокса вниз, к правой части S3)
+    p1 = (ml_x + BW * 0.30, Y_TOP)
+    p2 = (s3_x + BW * 0.80, Y_BOT + 1.7)
+    arr = FancyArrowPatch(p1, p2, arrowstyle="-|>", mutation_scale=14,
+                          linewidth=1.4, color=C_BORDER)
+    ax.add_patch(arr)
+    ax.text((p1[0] + p2[0]) / 2 + 0.15, (p1[1] + p2[1]) / 2,
+            "S3 API", fontsize=11, ha="left", va="center",
+            bbox=dict(facecolor="white", edgecolor="none", pad=1.2, alpha=0.9))
 
     out = os.path.join(OUT_DIR, "architecture-overview.png")
+    plt.savefig(out, dpi=DPI, bbox_inches="tight", facecolor="white")
+    plt.close()
+    return out
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# Рисунок 13 – Топология наблюдаемости (Loki / Prometheus / Grafana)
+# Источники в центре, Loki слева (логи push), Prometheus справа (scrape pull),
+# Grafana снизу. Все стрелки — короткие, без пересечений.
+# ──────────────────────────────────────────────────────────────────────────
+def fig13_monitoring():
+    fig, ax = plt.subplots(figsize=(13.0, 7.0), dpi=DPI)
+    ax.set_xlim(0, 21)
+    ax.set_ylim(0, 11.5)
+    ax.axis("off")
+
+    # центральная колонка — источники телеметрии
+    SRC_X = 7.5
+    SRC_W = 6.0
+    SRC_H = 1.7
+    api = _box(ax, SRC_X, 8.6, SRC_W, SRC_H,
+               "Kotlin Spring Boot\n(api-service)",
+               fc=C_API, weight="bold", fontsize=12)
+    ml = _box(ax, SRC_X, 6.4, SRC_W, SRC_H,
+              "Python ML Worker\n(TripoSR)",
+              fc=C_ML, weight="bold", fontsize=12)
+    infra = _box(ax, SRC_X, 4.2, SRC_W, SRC_H,
+                 "Инфраструктура\n(Kafka, PostgreSQL, MinIO)",
+                 fc=C_KAFKA, weight="bold", fontsize=12)
+
+    # слева — Loki (приёмник журналов)
+    LOKI_X = 0.4
+    LOKI_W = 5.5
+    loki = _box(ax, LOKI_X, 6.0, LOKI_W, 3.5,
+                "Loki + Promtail\n(JSON-журналы)",
+                fc=C_OBS, weight="bold", fontsize=13)
+
+    # справа — Prometheus (scrape метрик)
+    PROM_X = 15.1
+    PROM_W = 5.5
+    prom = _box(ax, PROM_X, 6.0, PROM_W, 3.5,
+                "Prometheus\n(метрики, scrape)",
+                fc=C_OBS, weight="bold", fontsize=13)
+
+    # снизу по центру — Grafana
+    graf = _box(ax, 7.5, 0.8, 6.0, 2.0,
+                "Grafana\n(дашборды, алерты)",
+                fc=C_OBS, weight="bold", fontsize=13)
+
+    # ── стрелки: источники → Loki (logs), горизонтальные слева ─────────
+    def hline(x1, x2, y, label, fs=11):
+        arr = FancyArrowPatch(
+            (x1, y), (x2, y), arrowstyle="-|>", mutation_scale=14,
+            linewidth=1.4, color=C_BORDER,
+        )
+        ax.add_patch(arr)
+        mx = (x1 + x2) / 2
+        ax.text(mx, y + 0.18, label, fontsize=fs, ha="center", va="bottom",
+                bbox=dict(facecolor="white", edgecolor="none", pad=1.0, alpha=0.9))
+
+    # source.left = SRC_X; loki.right = LOKI_X + LOKI_W
+    hline(SRC_X, LOKI_X + LOKI_W, 8.6 + SRC_H / 2, "logs")
+    hline(SRC_X, LOKI_X + LOKI_W, 6.4 + SRC_H / 2, "logs")
+    hline(SRC_X, LOKI_X + LOKI_W, 4.2 + SRC_H / 2, "logs")
+
+    # ── Prometheus → источники (scrape) ────────────────────────────────
+    hline(PROM_X, SRC_X + SRC_W, 8.6 + SRC_H / 2, "scrape")
+    hline(PROM_X, SRC_X + SRC_W, 6.4 + SRC_H / 2, "scrape")
+    hline(PROM_X, SRC_X + SRC_W, 4.2 + SRC_H / 2, "scrape")
+
+    # ── Loki → Grafana, Prometheus → Grafana (диагонали к центру снизу) ─
+    p1 = (LOKI_X + LOKI_W * 0.7, 6.0)
+    p2 = (graf[0] - 1.3, 0.8 + 2.0)
+    arr = FancyArrowPatch(p1, p2, arrowstyle="-|>", mutation_scale=14,
+                          linewidth=1.4, color=C_BORDER,
+                          connectionstyle="arc3,rad=0.10")
+    ax.add_patch(arr)
+    ax.text((p1[0] + p2[0]) / 2 - 0.3, (p1[1] + p2[1]) / 2,
+            "LogQL", fontsize=11, ha="right", va="center",
+            bbox=dict(facecolor="white", edgecolor="none", pad=1.2, alpha=0.9))
+
+    p1 = (PROM_X + PROM_W * 0.3, 6.0)
+    p2 = (graf[0] + 1.3, 0.8 + 2.0)
+    arr = FancyArrowPatch(p1, p2, arrowstyle="-|>", mutation_scale=14,
+                          linewidth=1.4, color=C_BORDER,
+                          connectionstyle="arc3,rad=-0.10")
+    ax.add_patch(arr)
+    ax.text((p1[0] + p2[0]) / 2 + 0.3, (p1[1] + p2[1]) / 2,
+            "PromQL", fontsize=11, ha="left", va="center",
+            bbox=dict(facecolor="white", edgecolor="none", pad=1.2, alpha=0.9))
+
+    out = os.path.join(OUT_DIR, "architecture-monitoring.png")
     plt.savefig(out, dpi=DPI, bbox_inches="tight", facecolor="white")
     plt.close()
     return out
@@ -341,6 +474,6 @@ def fig5_ml_pipeline():
 
 
 if __name__ == "__main__":
-    for fn in (fig1_architecture, fig2_sequence, fig3_er, fig5_ml_pipeline):
+    for fn in (fig1_architecture, fig13_monitoring, fig2_sequence, fig3_er, fig5_ml_pipeline):
         path = fn()
         print(f"OK: {path}")

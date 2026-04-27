@@ -1,0 +1,22 @@
+%% Рисунок 13 – Топология подсистемы наблюдаемости платформы model-forge
+%% Источник: diploma/text/04-architecture.md, секция "Слой наблюдаемости"
+%% Рендер: mmdc -i architecture-monitoring.mmd -o architecture-monitoring.png -w 1800
+flowchart LR
+    API["Kotlin Spring Boot<br/>(api-service)"]
+    ML["Python ML Worker<br/>(TripoSR)"]
+    INFRA["Инфраструктура<br/>(Kafka, PostgreSQL, MinIO)"]
+
+    L[/"Loki + Promtail<br/>(JSON-журналы)"/]
+    P[/"Prometheus<br/>(метрики)"/]
+    G[/"Grafana<br/>(дашборды, алерты)"/]
+
+    API -->|logs| L
+    ML -->|logs| L
+    INFRA -->|logs| L
+
+    P -->|scrape| API
+    P -->|scrape| ML
+    P -->|scrape| INFRA
+
+    L -->|LogQL| G
+    P -->|PromQL| G
