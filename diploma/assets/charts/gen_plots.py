@@ -303,7 +303,8 @@ def fig12_exp4_burst_latency():
                  color="#C62828", va="center")
 
     ax2.axhline(30, color="#9E9E9E", linestyle=":", linewidth=1.2)
-    ax2.text(2.45, 30.5, "client timeout 30 с", fontsize=8, color="#616161")
+    ax2.text(2.45, 29.5, "client timeout 30 с", fontsize=8, color="#616161",
+             va="top")
 
     ax2.set_xticks([1, 2])
     ax2.set_xticklabels(["Sync (успешные)", "Async (все)"])
