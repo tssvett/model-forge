@@ -121,11 +121,18 @@ if ! command -v pandoc >/dev/null 2>&1; then
     exit 1
 fi
 
+LUA_FILTER_REL="scripts/apply-stosgau-styles.lua"
+if [[ ! -f "${LUA_FILTER_REL}" ]]; then
+    echo "ОТСУТСТВУЕТ Lua-фильтр: ${LUA_FILTER_REL}" >&2
+    exit 1
+fi
+
 echo "Сборка ${OUTPUT} ..."
 pandoc \
     "${CHAPTERS[@]}" \
     -o "${OUTPUT}" \
     --reference-doc="${TEMPLATE_REL}" \
+    --lua-filter="${LUA_FILTER_REL}" \
     --resource-path=. \
     --toc \
     --toc-depth=3 \
