@@ -27,7 +27,7 @@
 
 4. Han, X.-F. Image-based 3D Object Reconstruction: State-of-the-Art and Trends in
    the Deep Learning Era / X.-F. Han, H. Laga, M. Bennamoun // IEEE Transactions on
-   Pattern Analysis and Machine Intelligence. – 2019. – Vol. 43, № 5. – P. 1578–1604.
+   Pattern Analysis and Machine Intelligence. – 2021. – Vol. 43, № 5. – P. 1578–1604.
 
 5. Mildenhall, B. NeRF: Representing Scenes as Neural Radiance Fields for View
    Synthesis [Электронный ресурс] / B. Mildenhall, P.P. Srinivasan, M. Tancik
