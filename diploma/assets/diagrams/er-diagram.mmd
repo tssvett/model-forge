@@ -1,0 +1,40 @@
+%% Рисунок 3 – ER-диаграмма основных сущностей реляционной базы платформы model-forge
+%% Источник: diploma/text/04-architecture.md, секция 4.3 (схема данных)
+erDiagram
+    USERS ||--o{ TASKS : "создаёт"
+    TASKS ||--|| GENERATION_METRICS : "имеет"
+    TASKS ||--o{ OUTBOX_EVENTS : "порождает"
+
+    USERS {
+        uuid id PK
+        text email UK
+        text password_hash
+        timestamp created_at
+    }
+    TASKS {
+        uuid id PK
+        uuid user_id FK
+        text status "PENDING|PROCESSING|DONE|FAILED"
+        text input_s3_uri
+        text output_s3_uri
+        timestamp created_at
+        timestamp updated_at
+    }
+    GENERATION_METRICS {
+        uuid task_id PK,FK
+        numeric inference_time_s
+        numeric chamfer_distance
+        text model_version
+    }
+    OUTBOX_EVENTS {
+        uuid id PK
+        uuid task_id FK
+        text topic
+        jsonb payload
+        timestamp published_at
+    }
+    APP_SETTINGS {
+        text key PK
+        jsonb value
+        timestamp updated_at
+    }

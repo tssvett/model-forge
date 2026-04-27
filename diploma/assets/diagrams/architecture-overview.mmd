@@ -1,0 +1,40 @@
+%% Рисунок 1 – Компонентная диаграмма платформы model-forge
+%% Источник: diploma/text/04-architecture.md, секция 4.1
+%% Рендер: mmdc -i architecture-overview.mmd -o architecture-overview.png -w 1600
+flowchart LR
+    subgraph Client["Клиентский слой"]
+        FE["React SPA<br/>(frontend)"]
+    end
+    subgraph Edge["Слой API"]
+        API["Kotlin Spring Boot<br/>(api-service)"]
+    end
+    subgraph Async["Асинхронный канал"]
+        K["Apache Kafka<br/>topics: tasks, results"]
+    end
+    subgraph Worker["Слой обработки"]
+        ML["Python ML Worker<br/>(TripoSR)"]
+    end
+    subgraph Storage["Хранилища"]
+        PG[("PostgreSQL<br/>tasks, users")]
+        S3[("MinIO<br/>S3-объекты")]
+    end
+    subgraph Obs["Наблюдаемость"]
+        L[/"Loki / Promtail"/]
+        P[/"Prometheus"/]
+        G[/"Grafana"/]
+    end
+
+    FE -->|HTTPS / REST| API
+    API -->|JDBC| PG
+    API -->|S3 API| S3
+    API -->|produce| K
+    K -->|consume| ML
+    ML -->|S3 API| S3
+    ML -->|produce results| K
+    K -->|consume results| API
+    API -. logs .-> L
+    ML -. logs .-> L
+    API -. metrics .-> P
+    ML -. metrics .-> P
+    L --> G
+    P --> G

@@ -1,0 +1,28 @@
+%% Рисунок 2 – Диаграмма последовательностей: путь от загрузки изображения до получения 3D-модели
+%% Источник: diploma/text/04-architecture.md, секция 4.2
+sequenceDiagram
+    autonumber
+    participant U as Пользователь<br/>(React SPA)
+    participant A as Kotlin API
+    participant S as MinIO (S3)
+    participant DB as PostgreSQL
+    participant K as Kafka
+    participant W as ML Worker
+
+    U->>A: POST /api/tasks (multipart image)
+    A->>S: PUT input/{task_id}.png
+    A->>DB: INSERT tasks (status=PENDING)
+    A->>K: produce tasks-topic {task_id, s3_uri}
+    A-->>U: 202 Accepted, task_id
+    K->>W: consume tasks-topic
+    W->>S: GET input/{task_id}.png
+    W->>W: TripoSR inference (1.8 с на RTX 3060)
+    W->>S: PUT output/{task_id}.glb
+    W->>K: produce results-topic {task_id, status=DONE}
+    K->>A: consume results-topic
+    A->>DB: UPDATE tasks SET status=DONE
+    U->>A: GET /api/tasks/{task_id} (poll)
+    A->>DB: SELECT status, glb_uri
+    A-->>U: 200 OK, presigned glb URL
+    U->>S: GET presigned URL
+    S-->>U: GLB-файл

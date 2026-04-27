@@ -1,0 +1,17 @@
+%% Рисунок 5 – Пайплайн обработки одной задачи в ML-воркере: от получения сообщения до записи результата
+%% Источник: diploma/text/05-implementation.md, секция 5.3 (TaskProcessor, 10 стадий)
+flowchart TB
+    A1["1. Consume tasks-topic<br/>(Kafka consumer)"] --> A2
+    A2["2. Валидация payload<br/>(pydantic)"] --> A3
+    A3["3. UPDATE tasks<br/>SET status=PROCESSING"] --> A4
+    A4["4. Скачивание input<br/>с MinIO (S3 GET)"] --> A5
+    A5["5. Препроцессинг<br/>(resize 512×512, RGB)"] --> A6
+    A6["6. Инференс TripoSR<br/>(GPU float16)"] --> A7
+    A7["7. Постпроцессинг<br/>(extract mesh → GLB)"] --> A8
+    A8["8. Загрузка GLB<br/>в MinIO (S3 PUT)"] --> A9
+    A9["9. INSERT generation_metrics<br/>(inference_time, chamfer)"] --> A10
+    A10["10. Produce results-topic<br/>{task_id, status=DONE}"]
+
+    A4 -. ошибка .-> Err["Обработка исключения:<br/>UPDATE status=FAILED,<br/>produce results с error"]
+    A6 -. CUDA OOM .-> Err
+    A8 -. ошибка .-> Err
