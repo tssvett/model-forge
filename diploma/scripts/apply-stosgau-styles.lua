@@ -192,6 +192,34 @@ local function wrap_paragraph(elem)
     )
 end
 
+-- По СТО СГАУ перечни оформляются обычными абзацами с дефисом перед элементом,
+-- без маркеров-кружочков и без автонумерации Word. Поэтому BulletList разворачиваем
+-- в плоскую последовательность Div'ов со стилем основного абзаца, а первый инлайн
+-- каждого элемента дополняем префиксом "– " (en-dash + пробел).
+local function bulletlist_to_blocks(bl)
+    local out = {}
+    for _, item in ipairs(bl.content) do
+        for _, sub in ipairs(item) do
+            if sub.t == "Para" or sub.t == "Plain" then
+                local inlines = sub.content
+                table.insert(inlines, 1, pandoc.Space())
+                table.insert(inlines, 1, pandoc.Str("\u{2013}"))
+                table.insert(out, pandoc.Div(
+                    { pandoc.Para(inlines) },
+                    pandoc.Attr("", {}, { ["custom-style"] = BODY_PARAGRAPH_STYLE })
+                ))
+            elseif sub.t == "BulletList" then
+                for _, b in ipairs(bulletlist_to_blocks(sub)) do
+                    table.insert(out, b)
+                end
+            else
+                table.insert(out, sub)
+            end
+        end
+    end
+    return out
+end
+
 local function refs_blocks_from(ordered_list)
     -- Развернуть OrderedList в плоскую последовательность Div'ов со
     -- стилем "+Список использованных источников". Маркеры списка не нужны —
@@ -226,6 +254,11 @@ function Pandoc(doc)
 
         elseif in_refs and block.t == "OrderedList" then
             for _, b in ipairs(refs_blocks_from(block)) do
+                table.insert(new_blocks, b)
+            end
+
+        elseif block.t == "BulletList" then
+            for _, b in ipairs(bulletlist_to_blocks(block)) do
                 table.insert(new_blocks, b)
             end
 
