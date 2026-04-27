@@ -128,9 +128,15 @@ if [[ ! -f "${LUA_FILTER_REL}" ]]; then
 fi
 
 echo "Сборка ${OUTPUT} ..."
+# -implicit_figures: подавляем pandoc'овский авто-figure, иначе alt-text из
+# ![alt](path) рендерится как Caption ВДОБАВОК к нашей ручной подписи
+# "Рисунок N – ..." ниже изображения. Видимая подпись делается вручную, чтобы
+# номера рисунков были сквозные по работе и попали под стиль
+# "+№ - Название рисунка" (см. apply-stosgau-styles.lua, caption_style).
 pandoc \
     "${CHAPTERS[@]}" \
     -o "${OUTPUT}" \
+    --from=markdown-implicit_figures \
     --reference-doc="${TEMPLATE_REL}" \
     --lua-filter="${LUA_FILTER_REL}" \
     --resource-path="text" \
