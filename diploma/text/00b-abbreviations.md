@@ -2,102 +2,102 @@
 
 В настоящей выпускной квалификационной работе применяются следующие сокращения и условные обозначения:
 
-БД — база данных
+БД – база данных
 
-ВКР — выпускная квалификационная работа
+ВКР – выпускная квалификационная работа
 
-ИСО (ISO) — Международная организация по стандартизации (International Organization for Standardization)
+ИСО (ISO) – Международная организация по стандартизации (International Organization for Standardization)
 
-МЭК (IEC) — Международная электротехническая комиссия (International Electrotechnical Commission)
+МЭК (IEC) – Международная электротехническая комиссия (International Electrotechnical Commission)
 
-ОЗУ — оперативное запоминающее устройство
+ОЗУ – оперативное запоминающее устройство
 
-ПО — программное обеспечение
+ПО – программное обеспечение
 
-СУБД — система управления базами данных
+СУБД – система управления базами данных
 
-2D — двумерное (изображение, пространство)
+2D – двумерное (изображение, пространство)
 
-3D — трёхмерное (изображение, модель, пространство)
+3D – трёхмерное (изображение, модель, пространство)
 
-ACID (Atomicity, Consistency, Isolation, Durability) — свойства транзакций реляционных СУБД
+ACID (Atomicity, Consistency, Isolation, Durability) – свойства транзакций реляционных СУБД
 
-API (Application Programming Interface) — программный интерфейс приложения
+API (Application Programming Interface) – программный интерфейс приложения
 
-AR (Augmented Reality) — дополненная реальность
+AR (Augmented Reality) – дополненная реальность
 
-CD (Chamfer Distance) — расстояние Чамфера, метрика близости множеств точек в трёхмерном пространстве
+CD (Chamfer Distance) – расстояние Чамфера, метрика близости множеств точек в трёхмерном пространстве
 
-CPU (Central Processing Unit) — центральное процессорное устройство
+CPU (Central Processing Unit) – центральное процессорное устройство
 
-CUDA (Compute Unified Device Architecture) — программно-аппаратная платформа параллельных вычислений компании NVIDIA
+CUDA (Compute Unified Device Architecture) – программно-аппаратная платформа параллельных вычислений компании NVIDIA
 
-DTO (Data Transfer Object) — объект передачи данных
+DTO (Data Transfer Object) – объект передачи данных
 
-ER (Entity – Relationship) — модель «сущность – связь»
+ER (Entity – Relationship) – модель «сущность – связь»
 
-GAN (Generative Adversarial Network) — генеративно-состязательная нейронная сеть
+GAN (Generative Adversarial Network) – генеративно-состязательная нейронная сеть
 
-GPU (Graphics Processing Unit) — графический процессор
+GPU (Graphics Processing Unit) – графический процессор
 
-gRPC (gRPC Remote Procedure Calls) — открытый высокопроизводительный фреймворк удалённого вызова процедур
+gRPC (gRPC Remote Procedure Calls) – открытый высокопроизводительный фреймворк удалённого вызова процедур
 
-HTTP (HyperText Transfer Protocol) — прикладной протокол передачи гипертекста
+HTTP (HyperText Transfer Protocol) – прикладной протокол передачи гипертекста
 
-IoU (Intersection over Union) — отношение площади пересечения к площади объединения, метрика геометрической близости
+IoU (Intersection over Union) – отношение площади пересечения к площади объединения, метрика геометрической близости
 
-JDBC (Java Database Connectivity) — стандарт доступа Java-приложений к реляционным базам данных
+JDBC (Java Database Connectivity) – стандарт доступа Java-приложений к реляционным базам данных
 
-JDK (Java Development Kit) — комплект средств разработки на платформе Java
+JDK (Java Development Kit) – комплект средств разработки на платформе Java
 
-JIT (Just-In-Time) — динамическая компиляция кода в момент его исполнения
+JIT (Just-In-Time) – динамическая компиляция кода в момент его исполнения
 
-JPA (Jakarta Persistence API) — стандарт объектно-реляционного отображения для платформы Java
+JPA (Jakarta Persistence API) – стандарт объектно-реляционного отображения для платформы Java
 
-JSON (JavaScript Object Notation) — текстовый формат обмена структурированными данными
+JSON (JavaScript Object Notation) – текстовый формат обмена структурированными данными
 
-JVM (Java Virtual Machine) — виртуальная машина Java
+JVM (Java Virtual Machine) – виртуальная машина Java
 
-JWT (JSON Web Token) — открытый стандарт компактных токенов аутентификации
+JWT (JSON Web Token) – открытый стандарт компактных токенов аутентификации
 
-LRM (Large Reconstruction Model) — крупномасштабная регрессионная модель 3D-реконструкции
+LRM (Large Reconstruction Model) – крупномасштабная регрессионная модель 3D-реконструкции
 
-ML (Machine Learning) — машинное обучение
+ML (Machine Learning) – машинное обучение
 
-MVS (Multi-View Stereo) — многоракурсная стерео-реконструкция
+MVS (Multi-View Stereo) – многоракурсная стерео-реконструкция
 
-NeRF (Neural Radiance Fields) — нейронные поля радиантности
+NeRF (Neural Radiance Fields) – нейронные поля радиантности
 
-REST (REpresentational State Transfer) — архитектурный стиль построения распределённых приложений
+REST (REpresentational State Transfer) – архитектурный стиль построения распределённых приложений
 
-RGB (Red, Green, Blue) — трёхканальное цветовое представление изображения
+RGB (Red, Green, Blue) – трёхканальное цветовое представление изображения
 
-RPC (Remote Procedure Call) — удалённый вызов процедур
+RPC (Remote Procedure Call) – удалённый вызов процедур
 
-RPS (Requests Per Second) — число обрабатываемых запросов в секунду
+RPS (Requests Per Second) – число обрабатываемых запросов в секунду
 
-SDK (Software Development Kit) — комплект средств разработки
+SDK (Software Development Kit) – комплект средств разработки
 
-SfM (Structure from Motion) — метод восстановления трёхмерной структуры сцены по последовательности изображений с движущейся камеры
+SfM (Structure from Motion) – метод восстановления трёхмерной структуры сцены по последовательности изображений с движущейся камеры
 
-SLA (Service Level Agreement) — соглашение об уровне обслуживания
+SLA (Service Level Agreement) – соглашение об уровне обслуживания
 
-SLI (Service Level Indicator) — показатель уровня обслуживания
+SLI (Service Level Indicator) – показатель уровня обслуживания
 
-SLO (Service Level Objective) — целевой уровень обслуживания
+SLO (Service Level Objective) – целевой уровень обслуживания
 
-SQL (Structured Query Language) — язык структурированных запросов к реляционным базам данных
+SQL (Structured Query Language) – язык структурированных запросов к реляционным базам данных
 
-SSD (Solid-State Drive) — твердотельный накопитель
+SSD (Solid-State Drive) – твердотельный накопитель
 
-UI (User Interface) — пользовательский интерфейс
+UI (User Interface) – пользовательский интерфейс
 
-URL (Uniform Resource Locator) — единый указатель местонахождения ресурса в сети
+URL (Uniform Resource Locator) – единый указатель местонахождения ресурса в сети
 
-UUID (Universally Unique Identifier) — универсально уникальный идентификатор
+UUID (Universally Unique Identifier) – универсально уникальный идентификатор
 
-UX (User Experience) — пользовательский опыт взаимодействия с системой
+UX (User Experience) – пользовательский опыт взаимодействия с системой
 
-VR (Virtual Reality) — виртуальная реальность
+VR (Virtual Reality) – виртуальная реальность
 
-VRAM (Video Random Access Memory) — оперативная память графического процессора
+VRAM (Video Random Access Memory) – оперативная память графического процессора
