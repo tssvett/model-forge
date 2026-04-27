@@ -112,7 +112,7 @@ def fig8_val_chamfer():
                edgecolor="#E53935", linewidth=1.6, zorder=5)
     ax.annotate(f"min = {cd[j]:.4f}\n(epoch {epochs[j]})",
                 xy=(epochs[j], cd[j]),
-                xytext=(epochs[j] - 1.5, cd[j] - 0.0015),
+                xytext=(epochs[j] - 1.6, cd[j] + 0.0020),
                 fontsize=9, color="#C62828",
                 arrowprops=dict(arrowstyle="->", color="#C62828", lw=0.9))
 
