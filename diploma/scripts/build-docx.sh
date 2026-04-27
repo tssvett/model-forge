@@ -133,7 +133,7 @@ pandoc \
     -o "${OUTPUT}" \
     --reference-doc="${TEMPLATE_REL}" \
     --lua-filter="${LUA_FILTER_REL}" \
-    --resource-path=. \
+    --resource-path="text" \
     --toc \
     --toc-depth=3 \
     --number-sections=false
