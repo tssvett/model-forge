@@ -138,4 +138,21 @@ pandoc \
     --toc-depth=3 \
     --number-sections=false
 
+# Post-обработка: pandoc для ячеек таблиц вшивает стиль "Compact",
+# подменяем его на styleId 989 ("+Текст в таблице" из шаблона Маршуниной).
+POSTPROCESS_REL="scripts/postprocess-docx.py"
+if [[ -f "${POSTPROCESS_REL}" ]]; then
+    if command -v python >/dev/null 2>&1; then
+        PY=python
+    elif command -v py >/dev/null 2>&1; then
+        PY=py
+    elif command -v python3 >/dev/null 2>&1; then
+        PY=python3
+    else
+        echo "Не найден python для пост-обработки docx." >&2
+        exit 1
+    fi
+    "${PY}" "${POSTPROCESS_REL}" "${OUTPUT}"
+fi
+
 echo "Готово: ${OUTPUT}"

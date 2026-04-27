@@ -112,6 +112,76 @@ end
 -- поэтому без явного маппинга красной строки не будет.
 local BODY_PARAGRAPH_STYLE = "+Абзац с отступом 1-ой строки"
 
+-- Стиль таблицы из шаблона Маршуниной: 'Table Grid' (styleId 938) даёт
+-- чёрные тонкие границы вокруг каждой ячейки. Без явного маппинга pandoc
+-- использует 'Normal Table' без границ.
+--
+-- Pandoc для таблиц прокидывает значение custom-style в <w:tblStyle w:val="..."/>
+-- ВЕРБАТИМ, а Word резолвит этот атрибут по w:styleId, а не по w:name.
+-- Поэтому здесь указан именно styleId "938" из template/blank-template.docx,
+-- а не человекочитаемое имя "Table Grid".
+local TABLE_STYLE = "938"
+
+-- Стиль абзаца внутри ячейки таблицы: '+Текст в таблице' (styleId 989)
+-- задаёт одинарный интервал и Times New Roman 12, без красной строки.
+local CELL_PARAGRAPH_STYLE = "+Текст в таблице"
+
+local function wrap_cell_paragraph(elem)
+    return pandoc.Div(
+        { elem },
+        pandoc.Attr("", {}, { ["custom-style"] = CELL_PARAGRAPH_STYLE })
+    )
+end
+
+local function process_cell(cell)
+    local new_contents = {}
+    for _, b in ipairs(cell.contents) do
+        if b.t == "Para" or b.t == "Plain" then
+            table.insert(new_contents, wrap_cell_paragraph(b))
+        else
+            table.insert(new_contents, b)
+        end
+    end
+    cell.contents = new_contents
+    return cell
+end
+
+local function process_row(row)
+    local new_cells = {}
+    for _, c in ipairs(row.cells) do
+        table.insert(new_cells, process_cell(c))
+    end
+    row.cells = new_cells
+    return row
+end
+
+local function process_rows_inplace(rows)
+    if not rows then return end
+    for i, r in ipairs(rows) do
+        rows[i] = process_row(r)
+    end
+end
+
+local function process_table(tbl)
+    -- Применить custom-style на саму таблицу, чтобы pandoc положил
+    -- <w:tblStyle w:val="938"/> в word/document.xml.
+    tbl.attr.attributes["custom-style"] = TABLE_STYLE
+
+    -- Обработать все строки таблицы (header, body, footer) — заменить
+    -- Para/Plain внутри ячеек на Div с custom-style "+Текст в таблице".
+    if tbl.head then
+        process_rows_inplace(tbl.head.rows)
+    end
+    for _, body in ipairs(tbl.bodies) do
+        process_rows_inplace(body.head)
+        process_rows_inplace(body.body)
+    end
+    if tbl.foot then
+        process_rows_inplace(tbl.foot.rows)
+    end
+    return tbl
+end
+
 local function wrap_paragraph(elem)
     -- Подпись рисунка/таблицы → свой стиль, не основной абзац.
     local txt = pandoc.utils.stringify(elem)
@@ -161,6 +231,9 @@ function Pandoc(doc)
 
         elseif block.t == "Para" or block.t == "Plain" then
             table.insert(new_blocks, wrap_paragraph(block))
+
+        elseif block.t == "Table" then
+            table.insert(new_blocks, process_table(block))
 
         else
             table.insert(new_blocks, block)
